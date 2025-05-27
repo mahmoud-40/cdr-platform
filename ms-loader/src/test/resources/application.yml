@@ -1,0 +1,52 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.trusted.packages: "com.cdr.msloader.entity"
+    topic:
+      cdr-records: cdr-records
+
+app:
+  file:
+    input:
+      directory: ${user.home}/cdr-platform/input_files
+      patterns:
+        - "*.csv"
+        - "*.json"
+        - "*.yaml"
+        - "*.yml"
+        - "*.xml"
+    processing:
+      batch-size: 1000
+      schedule:
+        cron: "0 */5 * * * *" # Run every 5 minutes
+      retry:
+        max-attempts: 3
+        initial-interval: 1000
+        multiplier: 2.0
+        max-interval: 10000
+
+logging:
+  level:
+    root: INFO
+    com.cdr.msloader: DEBUG
+    org.springframework.kafka: INFO
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

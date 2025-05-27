@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: ms-loader
+  datasource:
+    url: jdbc:postgresql://postgres:5432/cdr_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  kafka:
+    producer:
+      bootstrap-servers: kafka:29092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.trusted.packages: "com.cdr.msloader.entity"
+    topic:
+      cdr-records: cdr-records
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
+app:
+  file:
+    input:
+      directory: /app/input_files
+      patterns:
+        - "*.csv"
+        - "*.json"
+        - "*.yaml"
+        - "*.yml"
+        - "*.xml"
+    processing:
+      max-file-size: 10485760 # 10MB
+      batch-size: 1000
+      schedule:
+        initial-delay: 0
+        fixed-delay: 300000 # 5 minutes in milliseconds
+      retry:
+        max-attempts: 3
+        initial-interval: 1000
+        multiplier: 2.0
+        max-interval: 10000
+
+logging:
+  level:
+    root: INFO
+    com.cdr.msloader: DEBUG
+    org.springframework.kafka: INFO
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
