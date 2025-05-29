@@ -1,0 +1,12 @@
+C:\Mahmoud\Hammmmmm\Projects\cdr-platform\ms-backend\src\main\java\com\cdr\backend\service\CdrService.java
+C:\Mahmoud\Hammmmmm\Projects\cdr-platform\ms-backend\src\main\java\com\cdr\backend\kafka\CdrKafkaConsumer.java
+C:\Mahmoud\Hammmmmm\Projects\cdr-platform\ms-backend\src\main\java\com\cdr\backend\CdrBackendApplication.java
+C:\Mahmoud\Hammmmmm\Projects\cdr-platform\ms-backend\src\main\java\com\cdr\backend\controller\CdrController.java
+C:\Mahmoud\Hammmmmm\Projects\cdr-platform\ms-backend\src\main\java\com\cdr\backend\config\KeycloakConfig.java
+C:\Mahmoud\Hammmmmm\Projects\cdr-platform\ms-backend\src\main\java\com\cdr\backend\config\OpenApiConfig.java
+C:\Mahmoud\Hammmmmm\Projects\cdr-platform\ms-backend\src\main\java\com\cdr\backend\exception\GlobalExceptionHandler.java
+C:\Mahmoud\Hammmmmm\Projects\cdr-platform\ms-backend\src\main\java\com\cdr\backend\model\Cdr.java
+C:\Mahmoud\Hammmmmm\Projects\cdr-platform\ms-backend\src\main\java\com\cdr\backend\config\KafkaConfig.java
+C:\Mahmoud\Hammmmmm\Projects\cdr-platform\ms-backend\src\main\java\com\cdr\backend\repository\CdrRepository.java
+C:\Mahmoud\Hammmmmm\Projects\cdr-platform\ms-backend\src\main\java\com\cdr\backend\service\impl\CdrServiceImpl.java
+C:\Mahmoud\Hammmmmm\Projects\cdr-platform\ms-backend\src\main\java\com\cdr\backend\exception\ResourceNotFoundException.java

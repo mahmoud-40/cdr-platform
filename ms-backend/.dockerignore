@@ -1,0 +1,25 @@
+# Maven
+target/
+!target/*.jar
+.mvn/
+mvnw
+mvnw.cmd
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# OS specific files
+.DS_Store
+Thumbs.db 

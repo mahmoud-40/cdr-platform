@@ -1,0 +1,14 @@
+com\cdr\backend\controller\CdrController.class
+com\cdr\backend\model\Cdr$CallType.class
+com\cdr\backend\service\CdrService.class
+com\cdr\backend\model\Cdr.class
+com\cdr\backend\config\KeycloakConfig.class
+com\cdr\backend\config\OpenApiConfig.class
+com\cdr\backend\exception\GlobalExceptionHandler.class
+com\cdr\backend\kafka\CdrKafkaConsumer.class
+com\cdr\backend\repository\CdrRepository.class
+com\cdr\backend\config\KafkaConfig.class
+com\cdr\backend\CdrBackendApplication.class
+com\cdr\backend\service\impl\CdrServiceImpl.class
+com\cdr\backend\model\Cdr$CallStatus.class
+com\cdr\backend\exception\ResourceNotFoundException.class
