@@ -10,8 +10,8 @@ import java.util.List;
 
 @Repository
 public interface CdrRepository extends JpaRepository<Cdr, Long>, JpaSpecificationExecutor<Cdr> {
-    List<Cdr> findByCallingNumber(String number);
-    List<Cdr> findByCalledNumber(String number);
-    List<Cdr> findByCallType(Cdr.CallType type);
+    List<Cdr> findBySource(String source);
+    List<Cdr> findByDestination(String destination);
+    List<Cdr> findByService(String service);
     List<Cdr> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
 } 

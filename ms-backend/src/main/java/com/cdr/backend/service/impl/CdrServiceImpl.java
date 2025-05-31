@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -44,22 +43,18 @@ public class CdrServiceImpl implements CdrService {
     @Override
     @Transactional
     public Cdr createCdr(Cdr cdr) {
-        Cdr savedCdr = cdrRepository.save(cdr);
-        kafkaTemplate.send(CDR_TOPIC, savedCdr);
-        return savedCdr;
+        return cdrRepository.save(cdr);
     }
 
     @Override
     @Transactional
     public Cdr updateCdr(Long id, Cdr cdrDetails) {
         Cdr cdr = getCdrById(id);
-        cdr.setCallingNumber(cdrDetails.getCallingNumber());
-        cdr.setCalledNumber(cdrDetails.getCalledNumber());
+        cdr.setSource(cdrDetails.getSource());
+        cdr.setDestination(cdrDetails.getDestination());
         cdr.setStartTime(cdrDetails.getStartTime());
-        cdr.setCallType(cdrDetails.getCallType());
-        cdr.setDurationSeconds(cdrDetails.getDurationSeconds());
-        cdr.setEndTime(cdrDetails.getEndTime());
-        cdr.setCallStatus(cdrDetails.getCallStatus());
+        cdr.setService(cdrDetails.getService());
+        cdr.setUsage(cdrDetails.getUsage());
         return cdrRepository.save(cdr);
     }
 
@@ -78,63 +73,41 @@ public class CdrServiceImpl implements CdrService {
     @Override
     public Page<Cdr> searchCdrs(Map<String, String> filters, Pageable pageable) {
         Specification<Cdr> spec = Specification.where(null);
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
-
-        if (filters.containsKey("callingNumber")) {
+        
+        if (filters.containsKey("source")) {
             spec = spec.and((root, query, cb) -> 
-                cb.equal(root.get("callingNumber"), filters.get("callingNumber")));
+                cb.like(root.get("source"), "%" + filters.get("source") + "%"));
         }
-
-        if (filters.containsKey("calledNumber")) {
+        
+        if (filters.containsKey("destination")) {
             spec = spec.and((root, query, cb) -> 
-                cb.equal(root.get("calledNumber"), filters.get("calledNumber")));
+                cb.like(root.get("destination"), "%" + filters.get("destination") + "%"));
         }
-
-        if (filters.containsKey("callType")) {
+        
+        if (filters.containsKey("service")) {
             spec = spec.and((root, query, cb) -> 
-                cb.equal(root.get("callType"), Cdr.CallType.valueOf(filters.get("callType"))));
+                cb.equal(root.get("service"), filters.get("service")));
         }
-
-        if (filters.containsKey("startTimeFrom")) {
-            LocalDateTime startTime = LocalDateTime.parse(filters.get("startTimeFrom"), formatter);
-            spec = spec.and((root, query, cb) -> 
-                cb.greaterThanOrEqualTo(root.get("startTime"), startTime));
-        }
-
-        if (filters.containsKey("startTimeTo")) {
-            LocalDateTime endTime = LocalDateTime.parse(filters.get("startTimeTo"), formatter);
-            spec = spec.and((root, query, cb) -> 
-                cb.lessThanOrEqualTo(root.get("startTime"), endTime));
-        }
-
-        if (filters.containsKey("callStatus")) {
-            spec = spec.and((root, query, cb) -> 
-                cb.equal(root.get("callStatus"), Cdr.CallStatus.valueOf(filters.get("callStatus"))));
-        }
-
+        
         return cdrRepository.findAll(spec, pageable);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Cdr> getCdrsByCallingNumber(String number) {
-        return cdrRepository.findByCallingNumber(number);
+    public List<Cdr> getCdrsBySource(String source) {
+        return cdrRepository.findBySource(source);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Cdr> getCdrsByCalledNumber(String number) {
-        return cdrRepository.findByCalledNumber(number);
+    public List<Cdr> getCdrsByDestination(String destination) {
+        return cdrRepository.findByDestination(destination);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Cdr> getCdrsByCallType(Cdr.CallType type) {
-        return cdrRepository.findByCallType(type);
+    public List<Cdr> getCdrsByService(String service) {
+        return cdrRepository.findByService(service);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Cdr> getCdrsByDateRange(LocalDateTime start, LocalDateTime end) {
         return cdrRepository.findByStartTimeBetween(start, end);
     }

@@ -16,8 +16,8 @@ public interface CdrService {
     void deleteCdr(Long id);
     Page<Cdr> getAllCdrs(Pageable pageable);
     Page<Cdr> searchCdrs(Map<String, String> filters, Pageable pageable);
-    List<Cdr> getCdrsByCallingNumber(String number);
-    List<Cdr> getCdrsByCalledNumber(String number);
-    List<Cdr> getCdrsByCallType(Cdr.CallType type);
+    List<Cdr> getCdrsBySource(String source);
+    List<Cdr> getCdrsByDestination(String destination);
+    List<Cdr> getCdrsByService(String service);
     List<Cdr> getCdrsByDateRange(LocalDateTime start, LocalDateTime end);
 } 

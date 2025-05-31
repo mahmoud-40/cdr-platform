@@ -9,37 +9,13 @@ public class Cdr {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "calling_number", nullable = false)
-    private String callingNumber;
-
-    @Column(name = "called_number", nullable = false)
-    private String calledNumber;
-
-    @Column(name = "start_time", nullable = false)
+    
+    private String source;
+    private String destination;
     private LocalDateTime startTime;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "call_type", nullable = false)
-    private CallType callType;
-
-    @Column(name = "duration_seconds")
-    private Integer durationSeconds;
-
-    @Column(name = "end_time")
-    private LocalDateTime endTime;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "call_status", nullable = false)
-    private CallStatus callStatus;
-
-    public enum CallType { VOICE, SMS, DATA }
-    public enum CallStatus { COMPLETED, MISSED, REJECTED, BUSY, FAILED }
-
-    // Default constructor
-    public Cdr() {}
-
-    // Getters and Setters
+    private String service;
+    private Integer usage;
+    
     public Long getId() {
         return id;
     }
@@ -48,20 +24,20 @@ public class Cdr {
         this.id = id;
     }
 
-    public String getCallingNumber() {
-        return callingNumber;
+    public String getSource() {
+        return source;
     }
 
-    public void setCallingNumber(String callingNumber) {
-        this.callingNumber = callingNumber;
+    public void setSource(String source) {
+        this.source = source;
     }
 
-    public String getCalledNumber() {
-        return calledNumber;
+    public String getDestination() {
+        return destination;
     }
 
-    public void setCalledNumber(String calledNumber) {
-        this.calledNumber = calledNumber;
+    public void setDestination(String destination) {
+        this.destination = destination;
     }
 
     public LocalDateTime getStartTime() {
@@ -72,35 +48,29 @@ public class Cdr {
         this.startTime = startTime;
     }
 
-    public CallType getCallType() {
-        return callType;
+    public String getService() {
+        return service;
     }
 
-    public void setCallType(CallType callType) {
-        this.callType = callType;
+    public void setService(String service) {
+        this.service = service;
     }
 
-    public Integer getDurationSeconds() {
-        return durationSeconds;
+    public Integer getUsage() {
+        return usage;
     }
 
-    public void setDurationSeconds(Integer durationSeconds) {
-        this.durationSeconds = durationSeconds;
+    public void setUsage(Integer usage) {
+        this.usage = usage;
     }
-
-    public LocalDateTime getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(LocalDateTime endTime) {
-        this.endTime = endTime;
-    }
-
-    public CallStatus getCallStatus() {
-        return callStatus;
-    }
-
-    public void setCallStatus(CallStatus callStatus) {
-        this.callStatus = callStatus;
+    
+    @PostLoad
+    public void validate() {
+        if (service.equals("SMS") && usage != 1) {
+            throw new IllegalStateException("SMS usage must be 1");
+        }
+        if (service.equals("DATA") && !destination.startsWith("http")) {
+            throw new IllegalStateException("DATA destination must be a URL");
+        }
     }
 } 

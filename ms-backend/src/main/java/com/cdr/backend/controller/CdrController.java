@@ -46,19 +46,19 @@ public class CdrController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/calling/{number}")
-    public ResponseEntity<List<Cdr>> getCdrsByCallingNumber(@PathVariable String number) {
-        return ResponseEntity.ok(cdrService.getCdrsByCallingNumber(number));
+    @GetMapping("/source/{source}")
+    public ResponseEntity<List<Cdr>> getCdrsBySource(@PathVariable String source) {
+        return ResponseEntity.ok(cdrService.getCdrsBySource(source));
     }
 
-    @GetMapping("/called/{number}")
-    public ResponseEntity<List<Cdr>> getCdrsByCalledNumber(@PathVariable String number) {
-        return ResponseEntity.ok(cdrService.getCdrsByCalledNumber(number));
+    @GetMapping("/destination/{destination}")
+    public ResponseEntity<List<Cdr>> getCdrsByDestination(@PathVariable String destination) {
+        return ResponseEntity.ok(cdrService.getCdrsByDestination(destination));
     }
 
-    @GetMapping("/type/{type}")
-    public ResponseEntity<List<Cdr>> getCdrsByCallType(@PathVariable Cdr.CallType type) {
-        return ResponseEntity.ok(cdrService.getCdrsByCallType(type));
+    @GetMapping("/service/{service}")
+    public ResponseEntity<List<Cdr>> getCdrsByService(@PathVariable String service) {
+        return ResponseEntity.ok(cdrService.getCdrsByService(service));
     }
 
     @GetMapping("/date-range")
