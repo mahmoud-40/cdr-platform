@@ -5,58 +5,39 @@ import com.cdr.backend.repository.CdrRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.Map;
-
 @Service
 public class KafkaConsumerService {
+
     private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerService.class);
-    private final ObjectMapper objectMapper = new ObjectMapper();
+
     private final CdrRepository cdrRepository;
+    private final ObjectMapper objectMapper;
 
-    @Value("${spring.kafka.topic.cdr}")
-    private String cdrTopic;
-
-    @Autowired
-    public KafkaConsumerService(CdrRepository cdrRepository) {
+    public KafkaConsumerService(CdrRepository cdrRepository, ObjectMapper objectMapper) {
         this.cdrRepository = cdrRepository;
+        this.objectMapper = objectMapper;
+        logger.info("KafkaConsumerService started!");
     }
 
-    @KafkaListener(topics = "${spring.kafka.topic.cdr}", groupId = "${spring.kafka.consumer.group-id}")
-    public void listen(Map<String, Object> message) {
+    @KafkaListener(topics = "cdr-topic2", groupId = "cdr-group")
+    public void listen(String message) {
+        logger.info("Received CDR message from Kafka: {}", message);
+        processMessage(message);
+    }
+
+    public void processMessage(String message) {
         try {
-            logger.info("Received CDR message: {}", message);
-            
-            // Create a new Cdr object from the message
-            Cdr cdr = new Cdr();
-            cdr.setSource((String) message.get("source"));
-            cdr.setDestination((String) message.get("destination"));
-            cdr.setStartTime(LocalDateTime.parse((String) message.get("startTime")));
-            cdr.setService((String) message.get("service"));
-            cdr.setUsage((Integer) message.get("usage"));
-            
-            // Validate required fields
-            if (cdr.getSource() == null || cdr.getDestination() == null || cdr.getService() == null) {
-                logger.error("Missing required fields in CDR message: {}", message);
-                return;
-            }
-            
-            // Set default values for optional fields
-            if (cdr.getUsage() == null) {
-                cdr.setUsage(0);
-            }
-            
-            // Save the CDR
+            Cdr cdr = objectMapper.readValue(message, Cdr.class);
             cdrRepository.save(cdr);
-            logger.info("Successfully saved CDR: {}", cdr);
-            
+            logger.info("Successfully saved CDR record: {}", cdr);
         } catch (Exception e) {
             logger.error("Error processing CDR message: {}", message, e);
+            // TEMP: Also print to stderr for visibility in container logs
+            System.err.println("Error processing CDR message: " + message);
+            e.printStackTrace();
         }
     }
-} 
+}
