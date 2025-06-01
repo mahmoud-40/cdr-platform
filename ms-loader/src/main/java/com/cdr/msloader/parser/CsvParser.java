@@ -27,13 +27,7 @@ public class CsvParser implements CDRParser {
         List<CDR> cdrs = new ArrayList<>();
         try (CSVReader reader = new CSVReader(new FileReader(file))) {
             String[] record;
-            // Skip header if present
-            boolean firstLine = true;
             while ((record = reader.readNext()) != null) {
-                if (firstLine && (record[0].equalsIgnoreCase("source") || record[0].equalsIgnoreCase("timestamp"))) {
-                    firstLine = false;
-                    continue;
-                }
                 try {
                     // Trim all fields
                     for (int i = 0; i < record.length; i++) {
@@ -45,6 +39,7 @@ public class CsvParser implements CDRParser {
                     cdr.setStartTime(LocalDateTime.parse(record[2], DATE_TIME_FORMATTER));
                     cdr.setService(record[3]);
                     cdr.setUsage(Integer.parseInt(record[4]));
+                    log.info("Parsed CDR: {}", cdr);
                     cdrs.add(cdr);
                 } catch (DateTimeParseException e) {
                     log.error("Error parsing date in CSV file: {}", file.getName(), e);
@@ -56,7 +51,6 @@ public class CsvParser implements CDRParser {
                     log.error("Invalid CSV format in file: {}", file.getName(), e);
                     throw new IOException("Invalid CSV format. Expected 5 columns: source, destination, startTime, service, usage", e);
                 }
-                firstLine = false;
             }
         } catch (CsvValidationException e) {
             log.error("Error validating CSV file: {}", file.getName(), e);
