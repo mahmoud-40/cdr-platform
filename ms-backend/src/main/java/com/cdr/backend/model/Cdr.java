@@ -2,6 +2,8 @@ package com.cdr.backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.cdr.backend.config.ArrayToLocalDateTimeDeserializer;
 
 @Entity
 @Table(name = "cdrs")
@@ -12,6 +14,7 @@ public class Cdr {
     
     private String source;
     private String destination;
+    @JsonDeserialize(using = ArrayToLocalDateTimeDeserializer.class)
     private LocalDateTime startTime;
     private String service;
     private Integer usage;

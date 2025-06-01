@@ -2,6 +2,7 @@ package com.cdr.backend.controller;
 
 import com.cdr.backend.model.Cdr;
 import com.cdr.backend.service.CdrService;
+import com.cdr.backend.service.KafkaConsumerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,10 +15,12 @@ import java.util.List;
 public class CdrController {
 
     private final CdrService cdrService;
+    private final KafkaConsumerService kafkaConsumerService;
 
     @Autowired
-    public CdrController(CdrService cdrService) {
+    public CdrController(CdrService cdrService, KafkaConsumerService kafkaConsumerService) {
         this.cdrService = cdrService;
+        this.kafkaConsumerService = kafkaConsumerService;
     }
 
     @GetMapping
