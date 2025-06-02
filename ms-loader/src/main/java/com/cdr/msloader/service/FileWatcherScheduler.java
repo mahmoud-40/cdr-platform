@@ -4,6 +4,7 @@ package com.cdr.msloader.service;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -63,8 +64,17 @@ public class FileWatcherScheduler {
     private void sendToKafka(List<CDR> cdrs) {
         for (CDR cdr : cdrs) {
             try {
-                String jsonMessage = objectMapper.writeValueAsString(cdr);
-                jsonMessage = jsonMessage.replace("\"usage\":", "\"cdr_usage\":");
+                // Convert to ObjectNode to manipulate JSON
+                ObjectNode cdrNode = objectMapper.valueToTree(cdr);
+                // Remove the id field
+                cdrNode.remove("id");
+                // Convert usage to cdr_usage
+                if (cdrNode.has("usage")) {
+                    cdrNode.set("cdr_usage", cdrNode.get("usage"));
+                    cdrNode.remove("usage");
+                }
+                
+                String jsonMessage = objectMapper.writeValueAsString(cdrNode);
                 kafkaTemplate.send(cdrTopic, jsonMessage);
                 logger.info("Sent CDR to Kafka: {}", jsonMessage);
             } catch (Exception e) {

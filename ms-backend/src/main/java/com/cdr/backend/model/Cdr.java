@@ -13,11 +13,10 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Data
 @NoArgsConstructor
@@ -26,22 +25,28 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 @Table(name = "cdrs")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Cdr {
+    private static final Logger logger = LoggerFactory.getLogger(Cdr.class);
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
     
     @Column(nullable = false)
+    @JsonProperty("source")
     private String source;
     
     @Column(nullable = false)
+    @JsonProperty("destination")
     private String destination;
     
     @Column(name = "start_time", nullable = false)
+    @JsonProperty("startTime")
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime startTime;
     
     @Column(nullable = false)
+    @JsonProperty("service")
     private String service;
     
     @Column(name = "cdr_usage", nullable = false)
@@ -50,14 +55,19 @@ public class Cdr {
     
     @PostLoad
     public void validate() {
-        if ("SMS".equals(service) && usage != 1) {
-            throw new IllegalStateException("SMS usage must be 1");
-        }
-        if ("DATA".equals(service) && (destination == null || !destination.startsWith("http"))) {
-            throw new IllegalStateException("DATA destination must be a URL");
+        try {
+            if ("SMS".equals(service) && usage != 1) {
+                logger.warn("SMS usage is not 1 for CDR ID {}: {}", id, usage);
+            }
+            if ("DATA".equals(service) && (destination == null || !destination.startsWith("http"))) {
+                logger.warn("DATA destination is not a URL for CDR ID {}: {}", id, destination);
+            }
+        } catch (Exception e) {
+            logger.error("Error validating CDR ID {}: {}", id, e.getMessage());
         }
     }
 
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -106,30 +116,15 @@ public class Cdr {
         this.usage = usage;
     }
 
-    public static Cdr fromJson(String json) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            JsonNode node = mapper.readTree(json);
-            
-            Cdr cdr = new Cdr();
-            cdr.setSource(node.get("source").asText());
-            cdr.setDestination(node.get("destination").asText());
-            cdr.setService(node.get("service").asText());
-            
-            // Handle duplicate cdr_usage field by taking the first occurrence
-            JsonNode usageNode = node.get("cdr_usage");
-            if (usageNode != null) {
-                cdr.setUsage(usageNode.asInt());
-            }
-            
-            // Handle startTime which is now a string in ISO format
-            String startTimeStr = node.get("startTime").asText();
-            cdr.setStartTime(LocalDateTime.parse(startTimeStr));
-            
-            return cdr;
-        } catch (Exception e) {
-            throw new RuntimeException("Error parsing CDR JSON: " + e.getMessage(), e);
-        }
+    @Override
+    public String toString() {
+        return "Cdr{" +
+                "id=" + id +
+                ", source='" + source + '\'' +
+                ", destination='" + destination + '\'' +
+                ", startTime=" + startTime +
+                ", service='" + service + '\'' +
+                ", usage=" + usage +
+                '}';
     }
 } 

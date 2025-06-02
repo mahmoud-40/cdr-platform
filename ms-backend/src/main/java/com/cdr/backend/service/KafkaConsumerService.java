@@ -2,7 +2,6 @@ package com.cdr.backend.service;
 
 import com.cdr.backend.model.Cdr;
 import com.cdr.backend.repository.CdrRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +10,9 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+
 @Service
 public class KafkaConsumerService {
     private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerService.class);
@@ -18,9 +20,10 @@ public class KafkaConsumerService {
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public KafkaConsumerService(CdrRepository cdrRepository, ObjectMapper objectMapper) {
+    public KafkaConsumerService(CdrRepository cdrRepository) {
         this.cdrRepository = cdrRepository;
-        this.objectMapper = objectMapper;
+        this.objectMapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     @KafkaListener(topics = "${spring.kafka.topic.cdr}", groupId = "${spring.kafka.consumer.group-id}")
@@ -28,20 +31,13 @@ public class KafkaConsumerService {
     public void consume(String message, Acknowledgment ack) {
         try {
             logger.info("Received message from Kafka: {}", message);
-            
-            // Use the Cdr.fromJson method which is already configured to handle the message format
-            Cdr cdr = Cdr.fromJson(message);
-            
-            // Save to database
+            Cdr cdr = objectMapper.readValue(message, Cdr.class);
             cdrRepository.save(cdr);
-            logger.info("Successfully processed and saved CDR: {}", cdr);
-            
-            // Acknowledge the message
             ack.acknowledge();
+            logger.info("Successfully processed and saved CDR: {}", cdr);
         } catch (Exception e) {
             logger.error("Error processing message: {}. Error: {}", message, e.getMessage(), e);
-            // Don't acknowledge the message so it can be retried
-            throw e;
+            throw new RuntimeException("Error processing CDR message: " + e.getMessage(), e);
         }
     }
 }
