@@ -26,6 +26,9 @@ public class CsvParser implements CDRParser {
     public List<CDR> parse(File file) throws Exception {
         List<CDR> cdrs = new ArrayList<>();
         try (CSVReader reader = new CSVReader(new FileReader(file))) {
+            // Skip header row
+            reader.readNext();
+            
             String[] record;
             while ((record = reader.readNext()) != null) {
                 try {

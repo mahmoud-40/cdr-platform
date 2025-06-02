@@ -64,6 +64,19 @@ services:
     networks:
       - cdr-network
 
+  # Frontend Service
+  ms-frontend:
+    build:
+      context: ./ms-frontend
+      dockerfile: Dockerfile
+    container_name: cdr-frontend
+    ports:
+      - "8083:80"
+    depends_on:
+      - ms-backend
+    networks:
+      - cdr-network
+
   # Backend Service
   ms-backend:
     build:

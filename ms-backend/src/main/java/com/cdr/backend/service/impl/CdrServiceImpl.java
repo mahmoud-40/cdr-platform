@@ -2,6 +2,7 @@ package com.cdr.backend.service.impl;
 
 import com.cdr.backend.exception.ResourceNotFoundException;
 import com.cdr.backend.model.Cdr;
+import com.cdr.backend.model.CdrReport;
 import com.cdr.backend.repository.CdrRepository;
 import com.cdr.backend.service.CdrService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 @Service
 public class CdrServiceImpl implements CdrService {
@@ -129,6 +132,31 @@ public class CdrServiceImpl implements CdrService {
     @Override
     public List<Cdr> getCdrsByDateRange(LocalDateTime start, LocalDateTime end) {
         return cdrRepository.findByStartTimeBetween(start, end);
+    }
+
+    @Override
+    public List<CdrReport> getUsageReport() {
+        List<Cdr> cdrs = cdrRepository.findAll();
+        Map<String, Map<String, Double>> usageByDateAndService = new HashMap<>();
+
+        for (Cdr cdr : cdrs) {
+            String date = cdr.getStartTime().toLocalDate().toString();
+            String service = cdr.getService();
+            double usage = cdr.getUsage();
+
+            usageByDateAndService.computeIfAbsent(date, k -> new HashMap<>());
+            usageByDateAndService.get(date).merge(service, usage, Double::sum);
+        }
+
+        List<CdrReport> reports = new ArrayList<>();
+        for (Map.Entry<String, Map<String, Double>> entry : usageByDateAndService.entrySet()) {
+            String date = entry.getKey();
+            for (Map.Entry<String, Double> serviceEntry : entry.getValue().entrySet()) {
+                reports.add(new CdrReport(date, serviceEntry.getKey(), serviceEntry.getValue()));
+            }
+        }
+
+        return reports;
     }
 
     private void sendToKafka(Cdr cdr, String operation) {

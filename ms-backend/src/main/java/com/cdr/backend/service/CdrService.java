@@ -1,6 +1,7 @@
 package com.cdr.backend.service;
 
 import com.cdr.backend.model.Cdr;
+import com.cdr.backend.model.CdrReport;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -20,4 +21,5 @@ public interface CdrService {
     List<Cdr> getCdrsByDestination(String destination);
     List<Cdr> getCdrsByService(String service);
     List<Cdr> getCdrsByDateRange(LocalDateTime start, LocalDateTime end);
+    List<CdrReport> getUsageReport();
 } 
