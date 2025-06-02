@@ -19,7 +19,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
-import org.springframework.util.backoff.FixedBackOff;
+import org.springframework.util.backoff.ExponentialBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,6 +67,7 @@ public class KafkaConfig {
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 300000); // 5 minutes
         props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 60000); // 1 minute
+        props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 20000); // 20 seconds
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
@@ -95,9 +96,19 @@ public class KafkaConfig {
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         
-        // Configure error handler with retry
-        DefaultErrorHandler errorHandler = new DefaultErrorHandler(
-            new FixedBackOff(1000L, 3)); // Retry 3 times with 1 second delay
+        // Configure error handler with exponential backoff
+        ExponentialBackOff backOff = new ExponentialBackOff(1000L, 2.0);
+        backOff.setMaxInterval(10000L); // Max 10 seconds between retries
+        backOff.setMaxElapsedTime(300000L); // Max 5 minutes total retry time
+        
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(backOff);
+        errorHandler.setRetryListeners((record, ex, deliveryAttempt) -> {
+            if (deliveryAttempt > 1) {
+                // Log retry attempts after the first one
+                System.err.printf("Retry attempt %d for record %s%n", deliveryAttempt, record);
+            }
+        });
+        
         factory.setCommonErrorHandler(errorHandler);
         
         return factory;
