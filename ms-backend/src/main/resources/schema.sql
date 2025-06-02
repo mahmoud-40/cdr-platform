@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS cdrs (
     source VARCHAR(255) NOT NULL,
     destination VARCHAR(255) NOT NULL,
     service VARCHAR(50) NOT NULL,
-    usage INTEGER
+    cdr_usage INT NOT NULL
 ); 

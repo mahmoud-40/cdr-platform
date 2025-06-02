@@ -2,60 +2,82 @@
 package com.cdr.msloader.service;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cdr.msloader.entity.CDR;
-import com.cdr.msloader.repository.CdrRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 @EnableScheduling
 public class FileWatcherScheduler {
-    @Autowired
-    private FileProcessor fileProcessor;
+    private static final Logger logger = LoggerFactory.getLogger(FileWatcherScheduler.class);
 
-    @Autowired
-    private CdrRepository cdrRepository;
+    private final FileProcessor fileProcessor;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
+    private final String cdrTopic;
+    private final String inputDir;
 
-    @Autowired
-    private KafkaTemplate<String, Map<String, Object>> kafkaTemplate;
+    public FileWatcherScheduler(
+        FileProcessor fileProcessor,
+        KafkaTemplate<String, String> kafkaTemplate,
+        ObjectMapper objectMapper,
+        @Value("${spring.kafka.topic.cdr}") String cdrTopic,
+        @Value("${app.input.dir:/app/input_files}") String inputDir
+    ) {
+        this.fileProcessor = fileProcessor;
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
+        this.cdrTopic = cdrTopic;
+        this.inputDir = inputDir;
+    }
 
-    @Value("${spring.kafka.topic.cdr}")
-    private String cdrTopic;
-
-    @Scheduled(fixedRate = 1000) // Check every second
+    @Scheduled(fixedRate = 1000)
     public void processFiles() {
-        File folder = new File("/app/input_files");
+        File folder = new File(inputDir);
         File[] files = folder.listFiles();
         if (files != null) {
             for (File file : files) {
                 try {
+                    logger.info("Processing file: {}", file.getName());
                     List<CDR> cdrs = fileProcessor.processFile(file);
-                    // Save to PostgreSQL
-                    cdrRepository.saveAll(cdrs);
-                    // Send to Kafka as Map
-                    cdrs.forEach(cdr -> {
-                        Map<String, Object> message = new HashMap<>();
-                        message.put("source", cdr.getSource());
-                        message.put("destination", cdr.getDestination());
-                        message.put("startTime", cdr.getStartTime());
-                        message.put("service", cdr.getService());
-                        message.put("usage", cdr.getUsage());
-                        kafkaTemplate.send(cdrTopic, message);
-                    });
-                    file.delete(); // Delete after processing
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.info("Parsed {} CDRs from file {}", cdrs.size(), file.getName());
+                    sendToKafka(cdrs);
+                    deleteFile(file);
+                } catch (IOException e) {
+                    logger.error("Error processing file: {}", file.getName(), e);
                 }
             }
+        }
+    }
+
+    private void sendToKafka(List<CDR> cdrs) {
+        for (CDR cdr : cdrs) {
+            try {
+                String jsonMessage = objectMapper.writeValueAsString(cdr);
+                jsonMessage = jsonMessage.replace("\"usage\":", "\"cdr_usage\":");
+                kafkaTemplate.send(cdrTopic, jsonMessage);
+                logger.info("Sent CDR to Kafka: {}", jsonMessage);
+            } catch (Exception e) {
+                logger.error("Error sending CDR to Kafka: {}", cdr, e);
+            }
+        }
+    }
+
+    private void deleteFile(File file) {
+        if (file.delete()) {
+            logger.info("Successfully deleted file: {}", file.getName());
+        } else {
+            logger.warn("Failed to delete file: {}", file.getName());
         }
     }
 }

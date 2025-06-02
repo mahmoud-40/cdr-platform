@@ -5,28 +5,41 @@ import com.cdr.backend.model.Cdr;
 import com.cdr.backend.repository.CdrRepository;
 import com.cdr.backend.service.CdrService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class CdrServiceImpl implements CdrService {
+    private static final Logger logger = LoggerFactory.getLogger(CdrServiceImpl.class);
 
     private final CdrRepository cdrRepository;
-    private final KafkaTemplate<String, Cdr> kafkaTemplate;
-    private static final String CDR_TOPIC = "cdr-topic";
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
+
+    @Value("${spring.kafka.topic.cdr}")
+    private String cdrTopic;
 
     @Autowired
-    public CdrServiceImpl(CdrRepository cdrRepository, KafkaTemplate<String, Cdr> kafkaTemplate) {
+    public CdrServiceImpl(CdrRepository cdrRepository, 
+                         KafkaTemplate<String, String> kafkaTemplate,
+                         ObjectMapper objectMapper) {
         this.cdrRepository = cdrRepository;
         this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -43,7 +56,9 @@ public class CdrServiceImpl implements CdrService {
     @Override
     @Transactional
     public Cdr createCdr(Cdr cdr) {
-        return cdrRepository.save(cdr);
+        Cdr savedCdr = cdrRepository.save(cdr);
+        sendToKafka(savedCdr, "CREATE");
+        return savedCdr;
     }
 
     @Override
@@ -55,7 +70,10 @@ public class CdrServiceImpl implements CdrService {
         cdr.setStartTime(cdrDetails.getStartTime());
         cdr.setService(cdrDetails.getService());
         cdr.setUsage(cdrDetails.getUsage());
-        return cdrRepository.save(cdr);
+        
+        Cdr updatedCdr = cdrRepository.save(cdr);
+        sendToKafka(updatedCdr, "UPDATE");
+        return updatedCdr;
     }
 
     @Override
@@ -63,6 +81,7 @@ public class CdrServiceImpl implements CdrService {
     public void deleteCdr(Long id) {
         Cdr cdr = getCdrById(id);
         cdrRepository.delete(cdr);
+        sendToKafka(cdr, "DELETE");
     }
 
     @Override
@@ -110,5 +129,24 @@ public class CdrServiceImpl implements CdrService {
     @Override
     public List<Cdr> getCdrsByDateRange(LocalDateTime start, LocalDateTime end) {
         return cdrRepository.findByStartTimeBetween(start, end);
+    }
+
+    private void sendToKafka(Cdr cdr, String operation) {
+        try {
+            String key = String.format("%s-%d", operation, cdr.getId());
+            String value = objectMapper.writeValueAsString(cdr);
+            
+            CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(cdrTopic, key, value);
+            
+            future.whenComplete((result, ex) -> {
+                if (ex == null) {
+                    logger.info("Successfully sent CDR to Kafka: {} with operation: {}", cdr, operation);
+                } else {
+                    logger.error("Failed to send CDR to Kafka: {} with operation: {}", cdr, operation, ex);
+                }
+            });
+        } catch (Exception e) {
+            logger.error("Error sending CDR to Kafka: {} with operation: {}", cdr, operation, e);
+        }
     }
 } 

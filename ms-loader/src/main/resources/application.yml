@@ -22,7 +22,9 @@ spring:
       properties:
         spring.json.trusted.packages: "com.cdr.msloader.entity"
     topic:
-      cdr-records: cdr-records
+      cdr: cdr-topic2
+    consumer:
+      group-id: cdr-group
 
 management:
   endpoints:
@@ -68,6 +70,8 @@ logging:
     root: INFO
     com.cdr.msloader: DEBUG
     org.springframework.kafka: INFO
-    org.hibernate.SQL: DEBUG
+    org.hibernate.SQL: TRACE
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.tool.hbm2ddl: TRACE
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
