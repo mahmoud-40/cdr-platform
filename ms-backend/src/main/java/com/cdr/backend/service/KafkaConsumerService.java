@@ -5,39 +5,47 @@ import com.cdr.backend.repository.CdrRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 @Service
 public class KafkaConsumerService {
-
     private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerService.class);
-
     private final CdrRepository cdrRepository;
     private final ObjectMapper objectMapper;
 
+    @Autowired
     public KafkaConsumerService(CdrRepository cdrRepository, ObjectMapper objectMapper) {
         this.cdrRepository = cdrRepository;
         this.objectMapper = objectMapper;
-        logger.info("KafkaConsumerService started!");
     }
 
-    @KafkaListener(topics = "cdr-topic2", groupId = "cdr-group")
-    public void listen(String message) {
-        logger.info("Received CDR message from Kafka: {}", message);
-        processMessage(message);
-    }
-
-    public void processMessage(String message) {
+    @KafkaListener(topics = "${spring.kafka.topic.cdr}", groupId = "${spring.kafka.consumer.group-id}")
+    @Transactional
+    public void consume(String message) {
         try {
-            Cdr cdr = objectMapper.readValue(message, Cdr.class);
+            logger.info("Received message from Kafka: {}", message);
+            
+            // Convert the message to a Map first
+            Map<String, Object> cdrMap = objectMapper.readValue(message, Map.class);
+            
+            // Create a new CDR entity
+            Cdr cdr = new Cdr();
+            cdr.setSource((String) cdrMap.get("source"));
+            cdr.setDestination((String) cdrMap.get("destination"));
+            cdr.setStartTime(objectMapper.convertValue(cdrMap.get("startTime"), java.time.LocalDateTime.class));
+            cdr.setService((String) cdrMap.get("service"));
+            cdr.setUsage(((Number) cdrMap.get("cdr_usage")).intValue());
+
+            // Save to database
             cdrRepository.save(cdr);
-            logger.info("Successfully saved CDR record: {}", cdr);
+            logger.info("Successfully processed and saved CDR: {}", cdr);
         } catch (Exception e) {
-            logger.error("Error processing CDR message: {}", message, e);
-            // TEMP: Also print to stderr for visibility in container logs
-            System.err.println("Error processing CDR message: " + message);
-            e.printStackTrace();
+            logger.error("Error processing message: {}", message, e);
         }
     }
 }

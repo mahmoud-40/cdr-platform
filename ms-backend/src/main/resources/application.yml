@@ -6,7 +6,7 @@ spring:
     name: ms-backend
 
   datasource:
-    url: jdbc:mysql://mysql:3306/cdr_db?createDatabaseIfNotExist=true
+    url: jdbc:mysql://mysql:3306/cdr_db
     username: root
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -18,21 +18,34 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
 
   kafka:
     bootstrap-servers: kafka:29092
     consumer:
-      group-id: cdr-backend-group
+      group-id: cdr-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "*"
+        spring.json.trusted.packages: "com.cdr.backend.entity"
         spring.json.use.type.headers: false
         spring.json.value.default.type: java.util.Map
+      max-poll-records: 500
+      max-poll-interval-ms: 300000
+      session-timeout-ms: 60000
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      retry-backoff-ms: 1000
+      properties:
+        max.in.flight.requests.per.connection: 1
+        enable.idempotence: true
     topic:
       cdr: cdr-topic2
+      dead-letter: cdr-topic2.DLT
 
 keycloak:
   auth-server-url: http://localhost:8080/auth
@@ -46,12 +59,18 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,prometheus,metrics
   endpoint:
     health:
       show-details: always
-      probes:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
         enabled: true
+    tags:
+      application: ${spring.application.name}
   health:
     livenessState:
       enabled: true
@@ -60,5 +79,11 @@ management:
 
 logging:
   level:
-    org.springframework.kafka: DEBUG
+    root: INFO
     com.cdr.backend: DEBUG
+    org.springframework.kafka: INFO
+    org.hibernate.SQL: TRACE
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.tool.hbm2ddl: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
