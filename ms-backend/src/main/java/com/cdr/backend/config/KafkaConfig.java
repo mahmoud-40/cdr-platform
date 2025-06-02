@@ -18,6 +18,8 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -63,6 +65,8 @@ public class KafkaConfig {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 300000); // 5 minutes
+        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 60000); // 1 minute
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
@@ -72,6 +76,11 @@ public class KafkaConfig {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.ACKS_CONFIG, "all");
+        props.put(ProducerConfig.RETRIES_CONFIG, 3);
+        props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 1000);
+        props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1);
+        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
         return new DefaultKafkaProducerFactory<>(props);
     }
 
@@ -85,6 +94,12 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        
+        // Configure error handler with retry
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(
+            new FixedBackOff(1000L, 3)); // Retry 3 times with 1 second delay
+        factory.setCommonErrorHandler(errorHandler);
+        
         return factory;
     }
 } 

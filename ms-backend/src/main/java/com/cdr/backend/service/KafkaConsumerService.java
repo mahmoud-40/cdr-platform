@@ -3,65 +3,49 @@ package com.cdr.backend.service;
 import com.cdr.backend.model.Cdr;
 import com.cdr.backend.repository.CdrRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 @Service
 public class KafkaConsumerService {
     private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerService.class);
-
     private final CdrRepository cdrRepository;
     private final ObjectMapper objectMapper;
 
-    public KafkaConsumerService(CdrRepository cdrRepository) {
+    @Autowired
+    public KafkaConsumerService(CdrRepository cdrRepository, ObjectMapper objectMapper) {
         this.cdrRepository = cdrRepository;
-        this.objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+        this.objectMapper = objectMapper;
     }
 
     @KafkaListener(topics = "${spring.kafka.topic.cdr}", groupId = "${spring.kafka.consumer.group-id}")
-    public void listen(ConsumerRecord<String, String> record, Acknowledgment ack) {
-        String message = record.value();
-        logger.info("Received message: {}", message);
-
+    @Transactional
+    public void consume(String message) {
         try {
-            // Remove extra quotes and clean the message
-            String cleanedMessage = message.replaceAll("^\"|\"$", "").replaceAll(",\"cdr_usage\":\\d+(?=,\"cdr_usage\":)", "");
-            logger.info("Cleaned message: {}", cleanedMessage);
+            logger.info("Received message from Kafka: {}", message);
+            
+            // Convert the message to a Map first
+            Map<String, Object> cdrMap = objectMapper.readValue(message, Map.class);
+            
+            // Create a new CDR entity
+            Cdr cdr = new Cdr();
+            cdr.setSource((String) cdrMap.get("source"));
+            cdr.setDestination((String) cdrMap.get("destination"));
+            cdr.setStartTime(objectMapper.convertValue(cdrMap.get("startTime"), java.time.LocalDateTime.class));
+            cdr.setService((String) cdrMap.get("service"));
+            cdr.setUsage(((Number) cdrMap.get("cdr_usage")).intValue());
 
-            Cdr cdr = objectMapper.readValue(cleanedMessage, Cdr.class);
-            logger.info("Parsed CDR: {}", cdr);
-
-            if (validateCdr(cdr)) {
-                cdrRepository.save(cdr);
-                logger.info("Successfully saved CDR: {}", cdr);
-                ack.acknowledge();
-            } else {
-                logger.error("Invalid CDR format: {}", cleanedMessage);
-                ack.acknowledge(); // Skip invalid messages
-            }
+            // Save to database
+            cdrRepository.save(cdr);
+            logger.info("Successfully processed and saved CDR: {}", cdr);
         } catch (Exception e) {
             logger.error("Error processing message: {}", message, e);
-            ack.acknowledge(); // Optionally send to dead-letter topic instead
         }
-    }
-
-    private boolean validateCdr(Cdr cdr) {
-        if (cdr == null || cdr.getSource() == null || cdr.getSource().trim().isEmpty() ||
-            cdr.getDestination() == null || cdr.getDestination().trim().isEmpty() ||
-            cdr.getStartTime() == null || cdr.getService() == null || cdr.getService().trim().isEmpty() ||
-            cdr.getUsage() == null) {
-            logger.error("CDR failed validation: {}", cdr);
-            return false;
-        }
-        return true;
     }
 }

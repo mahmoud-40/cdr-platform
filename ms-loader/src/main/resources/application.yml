@@ -21,6 +21,8 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.trusted.packages: "com.cdr.msloader.entity"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: java.util.Map
     topic:
       cdr: cdr-topic2
     consumer:

@@ -3,6 +3,7 @@ package com.cdr.loader.service;
 import com.cdr.msloader.entity.CDR;
 import com.cdr.msloader.repository.CdrRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -32,17 +33,21 @@ public class CdrService {
             cdrRepository.save(cdr);
             logger.info("Saved CDR to PostgreSQL: {}", cdr);
 
-            // Serialize CDR to JSON
-            String cdrJson = objectMapper.writeValueAsString(cdr);
+            // Create a new ObjectNode without the id field
+            ObjectNode cdrNode = objectMapper.valueToTree(cdr);
+            cdrNode.remove("id");
+            
+            // Convert to JSON string
+            String cdrJson = objectMapper.writeValueAsString(cdrNode);
             
             // Send to Kafka with async handling
             CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send("cdr-topic2", cdrJson);
             
             future.whenComplete((result, ex) -> {
                 if (ex == null) {
-                    logger.info("Successfully sent CDR to Kafka: {}", cdr);
+                    logger.info("Successfully sent CDR to Kafka: {}", cdrJson);
                 } else {
-                    logger.error("Failed to send CDR to Kafka: {}", cdr, ex);
+                    logger.error("Failed to send CDR to Kafka: {}", cdrJson, ex);
                     // Here you could implement retry logic or move to dead letter queue
                 }
             });

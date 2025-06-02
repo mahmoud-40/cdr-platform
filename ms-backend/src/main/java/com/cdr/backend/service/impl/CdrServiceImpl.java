@@ -50,7 +50,7 @@ public class CdrServiceImpl implements CdrService {
     @Override
     public Cdr getCdrById(Long id) {
         return cdrRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cdr", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("CDR", "id", id));
     }
 
     @Override
