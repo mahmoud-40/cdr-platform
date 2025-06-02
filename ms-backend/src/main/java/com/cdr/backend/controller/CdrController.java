@@ -1,6 +1,7 @@
 package com.cdr.backend.controller;
 
 import com.cdr.backend.model.Cdr;
+import com.cdr.backend.model.CdrReport;
 import com.cdr.backend.service.CdrService;
 import com.cdr.backend.service.KafkaConsumerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/cdrs")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:8083"})
 public class CdrController {
 
     private final CdrService cdrService;
@@ -69,5 +71,10 @@ public class CdrController {
             @RequestParam LocalDateTime start,
             @RequestParam LocalDateTime end) {
         return ResponseEntity.ok(cdrService.getCdrsByDateRange(start, end));
+    }
+
+    @GetMapping("/report")
+    public ResponseEntity<List<CdrReport>> getUsageReport() {
+        return ResponseEntity.ok(cdrService.getUsageReport());
     }
 } 

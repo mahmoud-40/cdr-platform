@@ -56,10 +56,10 @@ public class Cdr {
     @PostLoad
     public void validate() {
         try {
-            if ("SMS".equals(service) && usage != 1) {
+        if ("SMS".equals(service) && usage != 1) {
                 logger.warn("SMS usage is not 1 for CDR ID {}: {}", id, usage);
-            }
-            if ("DATA".equals(service) && (destination == null || !destination.startsWith("http"))) {
+        }
+        if ("DATA".equals(service) && (destination == null || !destination.startsWith("http"))) {
                 logger.warn("DATA destination is not a URL for CDR ID {}: {}", id, destination);
             }
         } catch (Exception e) {
