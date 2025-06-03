@@ -15,7 +15,9 @@ const columns: GridColDef[] = [
         width: 200,
         renderCell: (params: GridRenderCellParams) => {
             const startTime = params.row.startTime;
-            if (!Array.isArray(startTime)) return <Typography>N/A</Typography>;
+            if (!Array.isArray(startTime) || startTime.length !== 5) {
+                return <Typography>Invalid Date</Typography>;
+            }
             try {
                 const [year, month, day, hour, minute] = startTime;
                 const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
@@ -33,7 +35,9 @@ const columns: GridColDef[] = [
         width: 120,
         renderCell: (params: GridRenderCellParams) => {
             const value = params.row.cdr_usage;
-            if (value === undefined || value === null) return <Typography>N/A</Typography>;
+            if (value === undefined || value === null) {
+                return <Typography>Invalid Value</Typography>;
+            }
             const cdr = params.row as Cdr;
             const numValue = Number(value);
             if (isNaN(numValue)) {
@@ -49,7 +53,7 @@ const columns: GridColDef[] = [
                     displayValue = `${numValue} MB`;
                     break;
                 case 'SMS':
-                    displayValue = '1';
+                    displayValue = String(numValue);
                     break;
                 default:
                     displayValue = String(numValue);
@@ -102,9 +106,19 @@ export const CdrList = () => {
                     pageSizeOptions={[10, 25, 50]}
                     initialState={{
                         pagination: { paginationModel: { pageSize: 10 } },
+                        sorting: {
+                            sortModel: [{ field: 'id', sort: 'desc' }],
+                        },
+                        filter: {
+                            filterModel: {
+                                items: [],
+                            },
+                        },
                     }}
                     loading={loading}
                     disableRowSelectionOnClick
+                    filterMode="server"
+                    sortingMode="server"
                     sx={{
                         '& .MuiDataGrid-cell': {
                             borderColor: 'rgba(224, 224, 224, 1)',

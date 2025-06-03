@@ -2,9 +2,9 @@ export interface Cdr {
     id: number;
     source: string;
     destination: string;
-    startTime: string;
+    startTime: number[];
     service: 'VOICE' | 'SMS' | 'DATA';
-    cdrUsage: number;
+    cdr_usage: number;
 }
 
 export interface CdrReport {
