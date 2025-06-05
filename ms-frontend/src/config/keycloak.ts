@@ -15,36 +15,43 @@ const keycloakConfig = {
 };
 
 // Create a single instance of Keycloak
-const keycloak = new Keycloak(keycloakConfig);
+let keycloakInstance: Keycloak | null = null;
+
+export const getKeycloakInstance = () => {
+    if (!keycloakInstance) {
+        keycloakInstance = new Keycloak(keycloakConfig);
+    }
+    return keycloakInstance;
+};
 
 // Add error handling
-keycloak.onAuthError = () => {
+getKeycloakInstance().onAuthError = () => {
     console.error('Keycloak auth error');
 };
 
-keycloak.onAuthRefreshError = () => {
+getKeycloakInstance().onAuthRefreshError = () => {
     console.error('Keycloak refresh error');
 };
 
-keycloak.onAuthRefreshSuccess = () => {
+getKeycloakInstance().onAuthRefreshSuccess = () => {
     console.log('Keycloak refresh success');
 };
 
-keycloak.onAuthSuccess = () => {
+getKeycloakInstance().onAuthSuccess = () => {
     console.log('Keycloak auth success');
 };
 
-keycloak.onAuthLogout = () => {
+getKeycloakInstance().onAuthLogout = () => {
     console.log('Keycloak logout');
 };
 
-keycloak.onReady = (authenticated) => {
+getKeycloakInstance().onReady = (authenticated) => {
     console.log('Keycloak ready:', { authenticated });
 };
 
-keycloak.onTokenExpired = () => {
+getKeycloakInstance().onTokenExpired = () => {
     console.log('Keycloak token expired');
 };
 
-// Export the instance
-export default keycloak; 
+// Export the instance getter
+export default getKeycloakInstance(); 
