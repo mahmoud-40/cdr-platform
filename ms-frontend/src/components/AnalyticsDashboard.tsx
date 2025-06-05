@@ -120,7 +120,7 @@ const AnalyticsDashboard: React.FC = () => {
                     </Typography>
                     <Box sx={{ height: 400 }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data}>
+                            <BarChart data={data} aria-label="Daily usage by service bar chart">
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis
                                     dataKey="date"
@@ -131,7 +131,7 @@ const AnalyticsDashboard: React.FC = () => {
                                     labelFormatter={(date) => format(parseISO(date), 'PP')}
                                     formatter={formatTooltipValue}
                                 />
-                                <Legend />
+                                <Legend aria-label="Service legend" />
                                 {Object.entries(SERVICE_COLORS).map(([service, color]) => (
                                     <Bar
                                         key={service}
@@ -151,7 +151,7 @@ const AnalyticsDashboard: React.FC = () => {
                     </Typography>
                     <Box sx={{ height: 400 }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
+                            <PieChart aria-label="Service distribution pie chart">
                                 <Pie
                                     data={Object.entries(serviceTotals).map(([service, total]) => ({
                                         name: service,
@@ -170,6 +170,7 @@ const AnalyticsDashboard: React.FC = () => {
                                     ))}
                                 </Pie>
                                 <Tooltip formatter={formatTooltipValue} />
+                                <Legend aria-label="Service legend" />
                             </PieChart>
                         </ResponsiveContainer>
                     </Box>

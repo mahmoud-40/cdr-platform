@@ -81,6 +81,9 @@ function App() {
         keycloak?.logout();
     };
 
+    // Extract username from token if available
+    const username = keycloak?.tokenParsed?.preferred_username || keycloak?.tokenParsed?.email || '';
+
     return (
         <Router>
             <ThemeProvider theme={theme}>
@@ -91,6 +94,11 @@ function App() {
                             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                                 CDR Platform
                             </Typography>
+                            {keycloak?.authenticated && username && (
+                                <Typography variant="body2" sx={{ mr: 2 }}>
+                                    Signed in as <b>{username}</b>
+                                </Typography>
+                            )}
                             {keycloak?.authenticated && (
                                 <Button color="inherit" onClick={handleLogout}>
                                     Logout

@@ -143,7 +143,7 @@ export const UsageReport = () => {
                     </Typography>
                     <Box sx={{ height: 400 }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data}>
+                            <BarChart data={data} aria-label="Daily usage by service bar chart">
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis
                                     dataKey="date"
@@ -154,7 +154,7 @@ export const UsageReport = () => {
                                     labelFormatter={(date) => format(parseISO(date), 'PP')}
                                     formatter={formatTooltipValue}
                                 />
-                                <Legend />
+                                <Legend aria-label="Service legend" />
                                 {Object.entries(SERVICE_COLORS).map(([service, color]) => (
                                     <Bar
                                         key={service}
@@ -174,7 +174,7 @@ export const UsageReport = () => {
                     </Typography>
                     <Box sx={{ height: 400 }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={data}>
+                            <LineChart data={data} aria-label="Usage trends line chart">
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis
                                     dataKey="date"
@@ -185,7 +185,7 @@ export const UsageReport = () => {
                                     labelFormatter={(date) => format(parseISO(date), 'PP')}
                                     formatter={formatTooltipValue}
                                 />
-                                <Legend />
+                                <Legend aria-label="Service legend" />
                                 {Object.entries(SERVICE_COLORS).map(([service, color]) => (
                                     <Line
                                         key={service}
