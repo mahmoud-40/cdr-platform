@@ -47,8 +47,16 @@ spring:
       cdr: cdr-topic2
       dead-letter: cdr-topic2.DLT
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/auth/realms/cdr-platform
+          jwk-set-uri: http://keycloak:8080/auth/realms/cdr-platform/protocol/openid-connect/certs
+          audience: ms-backend
+
 keycloak:
-  auth-server-url: http://localhost:8080/auth
+  auth-server-url: http://keycloak:8080/auth
   realm: cdr-platform
   resource: ms-backend
   public-client: true
@@ -81,6 +89,7 @@ logging:
   level:
     root: INFO
     com.cdr.backend: DEBUG
+    org.springframework.security: DEBUG
     org.springframework.kafka: INFO
     org.hibernate.SQL: TRACE
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE

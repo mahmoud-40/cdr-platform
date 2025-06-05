@@ -5,13 +5,24 @@ services:
     container_name: cdr-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: cdr_db
+      MYSQL_DATABASE: keycloak
+      MYSQL_USER: cdr_user
+      MYSQL_PASSWORD: cdr_password
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
     ports:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./mysql-init.sql:/docker-entrypoint-initdb.d/mysql-init.sql:ro
     networks:
       - cdr-network
+    healthcheck:
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Kafka and Zookeeper
   zookeeper:
@@ -20,16 +31,24 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
     ports:
       - "2181:2181"
     networks:
       - cdr-network
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kafka:
     image: confluentinc/cp-kafka:latest
     container_name: cdr-kafka
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     ports:
       - "9092:9092"
       - "29092:29092"
@@ -42,8 +61,31 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: /tmp/kafka-logs
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 1
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+      KAFKA_DELETE_TOPIC_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka_data:/var/lib/kafka/data
     networks:
       - cdr-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "kafka-topics.sh --bootstrap-server kafka:29092 --list || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
 
   # Keycloak
   keycloak:
@@ -53,16 +95,35 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_DB: mysql
-      KC_DB_URL: jdbc:mysql://mysql:3306/keycloak
+      KC_DB_URL: jdbc:mysql://mysql:3306/keycloak?useSSL=false&allowPublicKeyRetrieval=true
       KC_DB_USERNAME: root
       KC_DB_PASSWORD: root
+      KC_PROXY: edge
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HTTP_ENABLED: true
+      KC_HTTP_PORT: 8080
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      KC_TRANSACTION_XA_ENABLED: false
+      KC_DB_POOL_INITIAL_SIZE: 5
+      KC_DB_POOL_MAX_SIZE: 20
     ports:
       - "8080:8080"
     command: start-dev
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - cdr-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/auth/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   # Frontend Service
   ms-frontend:
@@ -92,12 +153,25 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080/auth
       SERVER_PORT: 8082
+      SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL: PLAINTEXT
+      SPRING_KAFKA_CONSUMER_AUTO_OFFSET_RESET: earliest
+      SPRING_KAFKA_CONSUMER_GROUP_ID: cdr-group
     depends_on:
-      - mysql
-      - kafka
-      - keycloak
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     networks:
       - cdr-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   # Loader Service
   ms-loader:
@@ -152,3 +226,4 @@ networks:
 volumes:
   mysql_data:
   postgres_data:
+  kafka_data:
