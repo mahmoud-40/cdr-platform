@@ -6,7 +6,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ReactKeycloakProvider } from '@react-keycloak/web';
-import keycloak from './config/keycloak';
+import { BrowserRouter } from 'react-router-dom';
+import { getKeycloakInstance } from './config/keycloak';
 import './index.css';
 import App from './App';
 
@@ -74,6 +75,9 @@ const keycloakInitOptions = {
     enableLogging: true
 };
 
+// Get the singleton Keycloak instance
+const keycloak = getKeycloakInstance();
+
 // Render app
 root.render(
     <React.StrictMode>
@@ -83,43 +87,21 @@ root.render(
                 initOptions={keycloakInitOptions}
                 onEvent={(eventType) => {
                     console.log('Keycloak event:', eventType);
-                    if (eventType === 'onAuthSuccess') {
-                        console.log('Authentication successful');
-                    } else if (eventType === 'onAuthError') {
-                        console.error('Authentication failed');
-                    } else if (eventType === 'onReady') {
-                        console.log('Keycloak is ready');
-                    } else if (eventType === 'onInitError') {
-                        console.error('Keycloak initialization error');
-                    }
-                }}
-                onTokens={(tokens) => {
-                    console.log('Keycloak tokens updated:', {
-                        token: tokens.token ? 'present' : 'missing',
-                        refreshToken: tokens.refreshToken ? 'present' : 'missing',
-                        idToken: tokens.idToken ? 'present' : 'missing'
-                    });
                 }}
                 LoadingComponent={
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                         <div>Loading...</div>
                     </div>
                 }
-                isLoadingCheck={(keycloak) => {
-                    console.log('Checking Keycloak loading state:', {
-                        initialized: keycloak.didInitialize,
-                        authenticated: keycloak.authenticated,
-                        token: keycloak.token ? 'present' : 'missing'
-                    });
-                    return !keycloak.didInitialize;
-                }}
             >
-                <ThemeProvider theme={theme}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                        <CssBaseline />
-                        <App />
-                    </LocalizationProvider>
-                </ThemeProvider>
+                <BrowserRouter>
+                    <ThemeProvider theme={theme}>
+                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                            <CssBaseline />
+                            <App />
+                        </LocalizationProvider>
+                    </ThemeProvider>
+                </BrowserRouter>
             </ReactKeycloakProvider>
         </ErrorBoundary>
     </React.StrictMode>

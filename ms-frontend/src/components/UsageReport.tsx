@@ -115,9 +115,9 @@ export const UsageReport = () => {
     }
 
     return (
-        <Box sx={{ p: 2 }}>
-            <Stack spacing={3}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ width: '100%', p: 0 }}>
+            <Stack spacing={3} sx={{ width: '100%' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
                     <Typography variant="h5" component="h1">Usage Report</Typography>
                     <FormControl sx={{ minWidth: 120 }}>
                         <InputLabel id="time-range-label">Time Range</InputLabel>
@@ -137,11 +137,11 @@ export const UsageReport = () => {
                     </FormControl>
                 </Box>
 
-                <Paper sx={{ p: 2 }}>
+                <Paper sx={{ p: 2, width: '100%' }}>
                     <Typography variant="h6" gutterBottom>
                         Daily Usage by Service
                     </Typography>
-                    <Box sx={{ height: 400 }}>
+                    <Box sx={{ height: 400, width: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={data} aria-label="Daily usage by service bar chart">
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -168,11 +168,11 @@ export const UsageReport = () => {
                     </Box>
                 </Paper>
 
-                <Paper sx={{ p: 2 }}>
+                <Paper sx={{ p: 2, width: '100%' }}>
                     <Typography variant="h6" gutterBottom>
                         Usage Trends
                     </Typography>
-                    <Box sx={{ height: 400 }}>
+                    <Box sx={{ height: 400, width: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={data} aria-label="Usage trends line chart">
                                 <CartesianGrid strokeDasharray="3 3" />

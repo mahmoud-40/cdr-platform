@@ -116,22 +116,24 @@ export const CdrList = () => {
     const handleSnackbarClose = () => setSnackbar((s) => ({ ...s, open: false }));
 
     const columns: GridColDef[] = [
-        { field: 'id', headerName: 'ID', width: 90 },
-        { field: 'source', headerName: 'Source', width: 150 },
-        { field: 'destination', headerName: 'Destination', width: 150 },
+        { field: 'id', headerName: 'ID', minWidth: 120, flex: 0.3 },
+        { field: 'source', headerName: 'Source', minWidth: 250, flex: 1.5 },
+        { field: 'destination', headerName: 'Destination', minWidth: 250, flex: 1.5 },
         {
             field: 'startTime',
             headerName: 'Start Time',
-            width: 200,
+            minWidth: 250,
+            flex: 1.2,
             renderCell: (params: GridRenderCellParams) => (
                 <Typography>{formatStartTime(params.row.startTime)}</Typography>
             ),
         },
-        { field: 'service', headerName: 'Service', width: 120 },
+        { field: 'service', headerName: 'Service', minWidth: 150, flex: 0.8 },
         {
             field: 'cdr_usage',
             headerName: 'Usage',
-            width: 120,
+            minWidth: 150,
+            flex: 0.8,
             renderCell: (params: GridRenderCellParams) => (
                 <Typography>
                     {formatUsage(params.row.cdr_usage, params.row.service)}
@@ -141,7 +143,8 @@ export const CdrList = () => {
         {
             field: 'actions',
             headerName: 'Actions',
-            width: 120,
+            minWidth: 150,
+            flex: 0.5,
             sortable: false,
             filterable: false,
             renderCell: (params: GridRenderCellParams) => (
@@ -180,13 +183,15 @@ export const CdrList = () => {
     }
 
     return (
-        <Box sx={{ height: '100vh', width: '100%', p: 2 }}>
-            <Typography variant="h5" gutterBottom>
-                CDR Records
-            </Typography>
-            <Button variant="contained" color="primary" sx={{ mb: 2 }} onClick={handleAdd}>
-                Add CDR
-            </Button>
+        <Box sx={{ height: '100vh', width: '100%', p: 0 }}>
+            <Box sx={{ p: 2 }}>
+                <Typography variant="h5" gutterBottom>
+                    CDR Records
+                </Typography>
+                <Button variant="contained" color="primary" sx={{ mb: 2 }} onClick={handleAdd}>
+                    Add CDR
+                </Button>
+            </Box>
             <Box sx={{ height: 'calc(100vh - 160px)', width: '100%' }}>
                 <DataGrid
                     rows={cdrs}
@@ -203,10 +208,14 @@ export const CdrList = () => {
                     sx={{
                         '& .MuiDataGrid-cell': {
                             borderColor: 'rgba(224, 224, 224, 1)',
+                            padding: '0 16px',
                         },
                         '& .MuiDataGrid-columnHeaders': {
                             backgroundColor: '#f5f5f5',
                         },
+                        '& .MuiDataGrid-columnHeader': {
+                            padding: '0 16px',
+                        }
                     }}
                 />
             </Box>
