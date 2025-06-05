@@ -6,7 +6,7 @@ The backend service for the CDR Platform, responsible for managing Call Detail R
 
 - **CDR Management**: CRUD operations for call detail records
 - **Real-time Processing**: Kafka consumer for processing CDR events from ms-loader
-- **Security**: OAuth2 resource server with JWT authentication (Keycloak integration planned)
+- **Security**: OAuth2 resource server with JWT authentication via Keycloak
 - **API Documentation**: OpenAPI/Swagger documentation
 - **Monitoring**: Spring Boot Actuator for health checks and metrics
 
@@ -19,6 +19,7 @@ The backend service for the CDR Platform, responsible for managing Call Detail R
 - Spring Kafka
 - MySQL
 - Docker
+- Keycloak
 
 ## Prerequisites
 
@@ -26,6 +27,7 @@ The backend service for the CDR Platform, responsible for managing Call Detail R
 - Maven
 - MySQL
 - Kafka
+- Keycloak
 
 ## Getting Started
 
@@ -41,19 +43,26 @@ The backend service for the CDR Platform, responsible for managing Call Detail R
 
 ## API Endpoints
 
+### CDR Management
 - `GET /api/cdrs`: Get all CDR records
 - `GET /api/cdrs/{id}`: Get CDR by ID
 - `POST /api/cdrs`: Create new CDR record
+- `PUT /api/cdrs/{id}`: Update CDR record
+- `DELETE /api/cdrs/{id}`: Delete CDR record
+
+### Reporting
 - `GET /api/cdrs/report`: Get CDR usage report
+- `GET /api/cdrs/report?startDate={date}&endDate={date}`: Get filtered usage report
 
 ## Data Model
 
 Each CDR record contains:
-- **Source**: Calling number (ANUM)
-- **Destination**: Called number (BNUM) for VOICE/SMS, URL for DATA
-- **StartTime**: Service start timestamp
-- **Service**: VOICE, SMS, or DATA
-- **Usage**: Minutes (VOICE), MB (DATA), or 1 (SMS)
+- **id**: Unique identifier
+- **source**: Calling number (ANUM)
+- **destination**: Called number (BNUM) for VOICE/SMS, URL for DATA
+- **startTime**: Service start timestamp (ISO-8601 format)
+- **service**: VOICE, SMS, or DATA
+- **usage**: Minutes (VOICE), MB (DATA), or 1 (SMS)
 
 ## Configuration
 
@@ -61,19 +70,20 @@ The service can be configured through `application.properties`:
 
 ```properties
 # Server Configuration
-server.port=8080
+server.port=8082
 
 # Database Configuration
-spring.datasource.url=jdbc:mysql://localhost:3306/cdr_db
-spring.datasource.username=root
-spring.datasource.password=root
+spring.datasource.url=jdbc:mysql://mysql:3306/cdr_db
+spring.datasource.username=cdr_user
+spring.datasource.password=cdr_password
 
 # Kafka Configuration
-spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.bootstrap-servers=kafka:9092
 spring.kafka.consumer.group-id=cdr-group
 
-# Security Configuration (Coming Soon)
-spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:8080/auth/realms/cdr
+# Security Configuration
+spring.security.oauth2.resourceserver.jwt.issuer-uri=http://keycloak:8080/realms/cdr-platform
+spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://keycloak:8080/realms/cdr-platform/protocol/openid-connect/certs
 ```
 
 ## Development
@@ -98,21 +108,15 @@ mvn test
 
 ## Docker Support
 
-The service includes a Dockerfile for containerization:
+The service is containerized and can be run using Docker Compose:
 
 ```bash
-# Build the image
-docker build -t cdr-backend .
+# Build and run all services
+docker-compose up -d
 
-# Run the container
-docker run -p 8080:8080 cdr-backend
+# Build and run only the backend
+docker-compose up -d ms-backend
 ```
-
-## Upcoming Features
-
-- Keycloak integration for authentication and authorization
-- Enhanced reporting capabilities
-- Kubernetes deployment support
 
 ## Contributing
 
