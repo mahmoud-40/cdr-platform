@@ -1,5 +1,16 @@
-import { useEffect, useState } from 'react';
-import { Box, Typography, Paper, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { useEffect, useState, useCallback } from 'react';
+import {
+    Box,
+    Typography,
+    Paper,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    CircularProgress,
+    Alert,
+    Stack,
+} from '@mui/material';
 import {
     BarChart,
     Bar,
@@ -12,11 +23,31 @@ import {
     LineChart,
     Line,
 } from 'recharts';
-import type { CdrReport } from '../types/cdr';
+import type { CdrReport, ServiceType } from '../types/cdr';
 import { cdrService } from '../services/api';
-import { format, parseISO, subDays, startOfDay, endOfDay } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 type TimeRange = '7d' | '30d' | '90d' | 'custom';
+
+interface ChartData {
+    date: string;
+    VOICE?: number;
+    DATA?: number;
+    SMS?: number;
+}
+
+const SERVICE_COLORS: Record<ServiceType, string> = {
+    VOICE: '#8884d8',
+    DATA: '#82ca9d',
+    SMS: '#ffc658',
+};
+
+const TIME_RANGE_OPTIONS = [
+    { value: '7d', label: 'Last 7 Days' },
+    { value: '30d', label: 'Last 30 Days' },
+    { value: '90d', label: 'Last 90 Days' },
+    { value: 'custom', label: 'Custom Range' },
+] as const;
 
 export const UsageReport = () => {
     const [reports, setReports] = useState<CdrReport[]>([]);
@@ -24,40 +55,26 @@ export const UsageReport = () => {
     const [error, setError] = useState<string | null>(null);
     const [timeRange, setTimeRange] = useState<TimeRange>('7d');
 
+    const fetchReports = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const data = await cdrService.getUsageReport();
+            setReports(data);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to fetch usage reports';
+            setError(errorMessage);
+            console.error('Error fetching reports:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
-        const fetchReports = async () => {
-            try {
-                const data = await cdrService.getUsageReport();
-                setReports(data);
-                setError(null);
-            } catch (err) {
-                setError('Failed to fetch usage reports');
-                console.error('Error fetching reports:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchReports();
-    }, [timeRange]);
+    }, [fetchReports]);
 
-    if (error) {
-        return (
-            <Box sx={{ p: 3 }}>
-                <Typography color="error">{error}</Typography>
-            </Box>
-        );
-    }
-
-    if (loading) {
-        return (
-            <Box sx={{ p: 3 }}>
-                <Typography>Loading reports...</Typography>
-            </Box>
-        );
-    }
-
-    const formatData = (reports: CdrReport[]) => {
+    const formatData = useCallback((reports: CdrReport[]): ChartData[] => {
         const groupedByDate = reports.reduce((acc, report) => {
             const date = format(parseISO(report.date), 'yyyy-MM-dd');
             if (!acc[date]) {
@@ -65,42 +82,57 @@ export const UsageReport = () => {
             }
             acc[date][report.service] = report.totalUsage;
             return acc;
-        }, {} as Record<string, any>);
+        }, {} as Record<string, ChartData>);
 
-        return Object.values(groupedByDate);
-    };
+        return Object.values(groupedByDate).sort((a, b) => 
+            parseISO(a.date).getTime() - parseISO(b.date).getTime()
+        );
+    }, []);
 
     const data = formatData(reports);
 
-    const getServiceColor = (service: string) => {
-        switch (service) {
-            case 'VOICE':
-                return '#8884d8';
-            case 'DATA':
-                return '#82ca9d';
-            case 'SMS':
-                return '#ffc658';
-            default:
-                return '#000000';
-        }
+    const formatTooltipValue = (value: number, name: string) => {
+        const unit = name === 'VOICE' ? 'minutes' : name === 'DATA' ? 'MB' : 'messages';
+        return [`${value} ${unit}`, name];
     };
+
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    if (error) {
+        return (
+            <Box sx={{ p: 3 }}>
+                <Alert severity="error" onClose={() => setError(null)}>
+                    {error}
+                </Alert>
+            </Box>
+        );
+    }
 
     return (
         <Box sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Stack spacing={3}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="h5">Usage Report</Typography>
+                    <Typography variant="h5" component="h1">Usage Report</Typography>
                     <FormControl sx={{ minWidth: 120 }}>
-                        <InputLabel>Time Range</InputLabel>
+                        <InputLabel id="time-range-label">Time Range</InputLabel>
                         <Select
+                            labelId="time-range-label"
+                            id="time-range-select"
                             value={timeRange}
                             label="Time Range"
                             onChange={(e) => setTimeRange(e.target.value as TimeRange)}
                         >
-                            <MenuItem value="7d">Last 7 Days</MenuItem>
-                            <MenuItem value="30d">Last 30 Days</MenuItem>
-                            <MenuItem value="90d">Last 90 Days</MenuItem>
-                            <MenuItem value="custom">Custom Range</MenuItem>
+                            {TIME_RANGE_OPTIONS.map(({ value, label }) => (
+                                <MenuItem key={value} value={value}>
+                                    {label}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                 </Box>
@@ -120,15 +152,17 @@ export const UsageReport = () => {
                                 <YAxis />
                                 <Tooltip
                                     labelFormatter={(date) => format(parseISO(date), 'PP')}
-                                    formatter={(value: number, name: string) => [
-                                        `${value} ${name === 'VOICE' ? 'minutes' : name === 'DATA' ? 'MB' : 'messages'}`,
-                                        name,
-                                    ]}
+                                    formatter={formatTooltipValue}
                                 />
                                 <Legend />
-                                <Bar dataKey="VOICE" name="Voice" fill={getServiceColor('VOICE')} />
-                                <Bar dataKey="DATA" name="Data" fill={getServiceColor('DATA')} />
-                                <Bar dataKey="SMS" name="SMS" fill={getServiceColor('SMS')} />
+                                {Object.entries(SERVICE_COLORS).map(([service, color]) => (
+                                    <Bar
+                                        key={service}
+                                        dataKey={service}
+                                        name={service}
+                                        fill={color}
+                                    />
+                                ))}
                             </BarChart>
                         </ResponsiveContainer>
                     </Box>
@@ -149,38 +183,24 @@ export const UsageReport = () => {
                                 <YAxis />
                                 <Tooltip
                                     labelFormatter={(date) => format(parseISO(date), 'PP')}
-                                    formatter={(value: number, name: string) => [
-                                        `${value} ${name === 'VOICE' ? 'minutes' : name === 'DATA' ? 'MB' : 'messages'}`,
-                                        name,
-                                    ]}
+                                    formatter={formatTooltipValue}
                                 />
                                 <Legend />
-                                <Line
-                                    type="monotone"
-                                    dataKey="VOICE"
-                                    name="Voice"
-                                    stroke={getServiceColor('VOICE')}
-                                    strokeWidth={2}
-                                />
-                                <Line
-                                    type="monotone"
-                                    dataKey="DATA"
-                                    name="Data"
-                                    stroke={getServiceColor('DATA')}
-                                    strokeWidth={2}
-                                />
-                                <Line
-                                    type="monotone"
-                                    dataKey="SMS"
-                                    name="SMS"
-                                    stroke={getServiceColor('SMS')}
-                                    strokeWidth={2}
-                                />
+                                {Object.entries(SERVICE_COLORS).map(([service, color]) => (
+                                    <Line
+                                        key={service}
+                                        type="monotone"
+                                        dataKey={service}
+                                        name={service}
+                                        stroke={color}
+                                        strokeWidth={2}
+                                    />
+                                ))}
                             </LineChart>
                         </ResponsiveContainer>
                     </Box>
                 </Paper>
-            </Box>
+            </Stack>
         </Box>
     );
 }; 

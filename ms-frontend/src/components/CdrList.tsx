@@ -1,9 +1,45 @@
 import { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, Typography } from '@mui/material';
-import type { Cdr } from '../types/cdr';
+import { Box, Typography, Alert, CircularProgress } from '@mui/material';
+import type { Cdr, ServiceType } from '../types/cdr';
 import { cdrService } from '../services/api';
+
+const formatStartTime = (startTime: string): string => {
+    try {
+        const date = new Date(startTime);
+        if (isNaN(date.getTime())) {
+            return 'Invalid Date';
+        }
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return 'Invalid Date';
+    }
+};
+
+const formatUsage = (value: number, service: ServiceType): string => {
+    if (value === undefined || value === null || isNaN(value)) {
+        return 'Invalid Value';
+    }
+    switch (service) {
+        case 'VOICE':
+            return `${value} minutes`;
+        case 'DATA':
+            return `${value} MB`;
+        case 'SMS':
+            return String(value);
+        default:
+            return String(value);
+    }
+};
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 90 },
@@ -13,53 +49,20 @@ const columns: GridColDef[] = [
         field: 'startTime',
         headerName: 'Start Time',
         width: 200,
-        renderCell: (params: GridRenderCellParams) => {
-            const startTime = params.row.startTime;
-            if (!Array.isArray(startTime) || startTime.length !== 5) {
-                return <Typography>Invalid Date</Typography>;
-            }
-            try {
-                const [year, month, day, hour, minute] = startTime;
-                const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-                return <Typography>{formattedDate}</Typography>;
-            } catch (error) {
-                console.error('Error formatting date:', error);
-                return <Typography>Invalid Date</Typography>;
-            }
-        },
+        renderCell: (params: GridRenderCellParams) => (
+            <Typography>{formatStartTime(params.row.startTime)}</Typography>
+        ),
     },
     { field: 'service', headerName: 'Service', width: 120 },
     {
         field: 'cdr_usage',
         headerName: 'Usage',
         width: 120,
-        renderCell: (params: GridRenderCellParams) => {
-            const value = params.row.cdr_usage;
-            if (value === undefined || value === null) {
-                return <Typography>Invalid Value</Typography>;
-            }
-            const cdr = params.row as Cdr;
-            const numValue = Number(value);
-            if (isNaN(numValue)) {
-                console.error('Invalid usage value:', value);
-                return <Typography>Invalid Value</Typography>;
-            }
-            let displayValue = '';
-            switch (cdr.service) {
-                case 'VOICE':
-                    displayValue = `${numValue} minutes`;
-                    break;
-                case 'DATA':
-                    displayValue = `${numValue} MB`;
-                    break;
-                case 'SMS':
-                    displayValue = String(numValue);
-                    break;
-                default:
-                    displayValue = String(numValue);
-            }
-            return <Typography>{displayValue}</Typography>;
-        },
+        renderCell: (params: GridRenderCellParams) => (
+            <Typography>
+                {formatUsage(params.row.cdr_usage, params.row.service)}
+            </Typography>
+        ),
     },
 ];
 
@@ -71,12 +74,13 @@ export const CdrList = () => {
     useEffect(() => {
         const fetchCdrs = async () => {
             try {
-                const data = await cdrService.getAllCdrs();
-                console.log('Fetched CDRs:', JSON.stringify(data, null, 2));
-                setCdrs(data);
+                setLoading(true);
                 setError(null);
+                const data = await cdrService.getAllCdrs();
+                setCdrs(data);
             } catch (err) {
-                setError('Failed to fetch CDRs');
+                const errorMessage = err instanceof Error ? err.message : 'Failed to fetch CDRs';
+                setError(errorMessage);
                 console.error('Error fetching CDRs:', err);
             } finally {
                 setLoading(false);
@@ -86,10 +90,20 @@ export const CdrList = () => {
         fetchCdrs();
     }, []);
 
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
     if (error) {
         return (
             <Box sx={{ p: 3 }}>
-                <Typography color="error">{error}</Typography>
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                </Alert>
             </Box>
         );
     }
@@ -109,16 +123,9 @@ export const CdrList = () => {
                         sorting: {
                             sortModel: [{ field: 'id', sort: 'desc' }],
                         },
-                        filter: {
-                            filterModel: {
-                                items: [],
-                            },
-                        },
                     }}
                     loading={loading}
                     disableRowSelectionOnClick
-                    filterMode="server"
-                    sortingMode="server"
                     sx={{
                         '& .MuiDataGrid-cell': {
                             borderColor: 'rgba(224, 224, 224, 1)',
