@@ -66,7 +66,7 @@ The platform consists of three main microservices:
    ```
 
 3. **Access the Application**:
-   - Frontend: http://localhost:3000
+   - Frontend: http://localhost:8083
    - Backend API: http://localhost:8082
    - Loader Service: http://localhost:8081
    - Keycloak: http://localhost:8080
