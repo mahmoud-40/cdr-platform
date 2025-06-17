@@ -44,7 +44,7 @@ services:
       retries: 5
 
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.4.4
     container_name: cdr-kafka
     depends_on:
       zookeeper:
@@ -226,4 +226,3 @@ networks:
 volumes:
   mysql_data:
   postgres_data:
-  kafka_data:
