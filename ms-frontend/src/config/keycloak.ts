@@ -14,7 +14,7 @@ const keycloakConfig = {
     scope: 'openid profile email'
 };
 
-// Create a single instance of Keycloak
+// Create a single instance of Keycloak (aka singleton)
 let keycloakInstance: Keycloak | null = null;
 
 export const getKeycloakInstance = () => {

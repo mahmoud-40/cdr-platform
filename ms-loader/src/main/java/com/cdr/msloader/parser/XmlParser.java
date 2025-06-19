@@ -1,9 +1,6 @@
 package com.cdr.msloader.parser;
 
 import com.cdr.msloader.entity.CDR;
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.JAXBException;
-import jakarta.xml.bind.Unmarshaller;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +38,7 @@ public class XmlParser implements CDRParser {
                 
                 cdr.setSource(getElementText(cdrElement, "source"));
                 cdr.setDestination(getElementText(cdrElement, "destination"));
-                cdr.setStartTime(LocalDateTime.parse(getElementText(cdrElement, "starttime")));
+                cdr.setStartTime(LocalDateTime.parse(getElementText(cdrElement, "starttime"))); // startTime
                 cdr.setService(getElementText(cdrElement, "service"));
                 cdr.setUsage(parseUsage(getElementText(cdrElement, "usage"), cdr.getService()));
                 
@@ -69,6 +66,6 @@ public class XmlParser implements CDRParser {
         if (service.equals("SMS")) {
             return 1;
         }
-        return Integer.parseInt(usage);
+        return Integer.valueOf(usage);
     }
 } 

@@ -1,4 +1,3 @@
-// src/main/java/com/cdr/msloader/service/FileProcessor.java
 package com.cdr.msloader.service;
 
 import java.io.File;
@@ -11,8 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MimeTypeUtils;
-
 import com.cdr.msloader.entity.CDR;
 import com.cdr.msloader.parser.CDRParser;
 import com.cdr.msloader.parser.CDRParserFactory;
@@ -24,7 +21,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 public class FileProcessor {
     private static final Logger log = LoggerFactory.getLogger(FileProcessor.class);
     private final CDRParserFactory parserFactory;
-    private final MeterRegistry meterRegistry;
     private final Counter processedFilesCounter;
     private final Counter failedFilesCounter;
     private final Counter processedRecordsCounter;
@@ -35,7 +31,6 @@ public class FileProcessor {
     @Autowired
     public FileProcessor(CDRParserFactory parserFactory, MeterRegistry meterRegistry) {
         this.parserFactory = parserFactory;
-        this.meterRegistry = meterRegistry;
         this.processedFilesCounter = Counter.builder("cdr.files.processed")
                 .description("Number of files processed successfully")
                 .register(meterRegistry);

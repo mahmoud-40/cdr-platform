@@ -1,20 +1,16 @@
 package com.cdr.backend.model;
 
-import java.time.LocalDateTime;
-
 public class CdrReport {
     private String date;
     private String service;
     private double totalUsage;
 
-    // Constructor
     public CdrReport(String date, String service, double totalUsage) {
         this.date = date;
         this.service = service;
         this.totalUsage = totalUsage;
     }
 
-    // Getters and Setters
     public String getDate() {
         return date;
     }

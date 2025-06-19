@@ -60,7 +60,7 @@ class FileProcessorIntegrationTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        // Create a test CSV file
+        // Create a test.csv CSV file
         testFile = File.createTempFile("test", ".csv");
         Files.write(testFile.toPath(), "timestamp,source,destination,duration\n2024-01-01T00:00:00,1234567890,0987654321,60".getBytes());
     }

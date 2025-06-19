@@ -105,7 +105,6 @@ public class KafkaConfig {
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         
-        // Configure error handler with exponential backoff
         ExponentialBackOff backOff = new ExponentialBackOff(1000L, 2.0);
         backOff.setMaxInterval(10000L); // Max 10 seconds between retries
         backOff.setMaxElapsedTime(300000L); // Max 5 minutes total retry time

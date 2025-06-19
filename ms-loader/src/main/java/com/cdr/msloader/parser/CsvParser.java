@@ -36,6 +36,7 @@ public class CsvParser implements CDRParser {
                     for (int i = 0; i < record.length; i++) {
                         record[i] = record[i].trim();
                     }
+                    // TODO: builders
                     CDR cdr = new CDR();
                     cdr.setSource(record[0]);
                     cdr.setDestination(record[1]);

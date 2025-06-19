@@ -47,9 +47,9 @@ class FileProcessorTest {
 
     @Test
     void testProcessValidFile() throws Exception {
-        // Create a test file
-        File testFile = tempDir.resolve("test.csv").toFile();
-        Files.write(testFile.toPath(), "test content".getBytes());
+        // Create a test.csv file
+        File testFile = tempDir.resolve("test.csv.csv").toFile();
+        Files.write(testFile.toPath(), "test.csv content".getBytes());
 
         // Mock parser behavior
         List<CDR> expectedRecords = Arrays.asList(
@@ -95,9 +95,9 @@ class FileProcessorTest {
 
     @Test
     void testProcessFileWithParserError() throws Exception {
-        // Create a test file
-        File testFile = tempDir.resolve("test.csv").toFile();
-        Files.write(testFile.toPath(), "test content".getBytes());
+        // Create a test.csv file
+        File testFile = tempDir.resolve("test.csv.csv").toFile();
+        Files.write(testFile.toPath(), "test.csv content".getBytes());
 
         // Mock parser to throw an exception
         when(parserFactory.getParser(any(File.class))).thenReturn(mockParser);
@@ -112,9 +112,9 @@ class FileProcessorTest {
 
     @Test
     void testProcessFileWithInvalidMimeType() throws IOException {
-        // Create a test file with an invalid extension
-        File invalidFile = tempDir.resolve("test.invalid").toFile();
-        Files.write(invalidFile.toPath(), "test content".getBytes());
+        // Create a test.csv file with an invalid extension
+        File invalidFile = tempDir.resolve("test.csv.invalid").toFile();
+        Files.write(invalidFile.toPath(), "test.csv content".getBytes());
 
         assertThrows(IOException.class, () -> fileProcessor.processFile(invalidFile));
         assertEquals(0, meterRegistry.get("cdr.files.processed").counter().count());

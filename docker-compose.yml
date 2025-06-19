@@ -226,3 +226,4 @@ networks:
 volumes:
   mysql_data:
   postgres_data:
+  kafka_data:
