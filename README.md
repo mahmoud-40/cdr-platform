@@ -4,8 +4,7 @@ A microservices-based platform for processing and managing Call Detail Records (
 
 ## Demo Video
 
-Uploading demo.mp4…
-
+https://github.com/user-attachments/assets/a60a6ce6-0f9c-4528-b3b2-cd5d0b200c37
 
 ## System Overview
 
