@@ -2,6 +2,11 @@
 
 A microservices-based platform for processing and managing Call Detail Records (CDRs) with real-time processing capabilities.
 
+## Demo Video
+
+Uploading demo.mp4…
+
+
 ## System Overview
 
 The CDR Platform is designed to handle telecommunications activity logs (CDRs) with the following data structure:
