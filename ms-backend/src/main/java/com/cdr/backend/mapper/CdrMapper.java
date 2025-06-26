@@ -23,6 +23,7 @@ public class CdrMapper {
 
     public static CdrDto toDto(Cdr entity) {
         CdrDto dto = new CdrDto();
+        dto.setId(entity.getId());
         dto.setSource(entity.getSource());
         dto.setDestination(entity.getDestination());
         dto.setStartTime(entity.getStartTime().format(FORMATTER));

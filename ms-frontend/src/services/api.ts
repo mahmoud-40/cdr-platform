@@ -3,7 +3,7 @@ import type { InternalAxiosRequestConfig, AxiosError } from 'axios';
 import type { Cdr, CdrReport, ApiError } from '../types/cdr';
 import keycloak from '../config/keycloak';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = '/api/v1';
 
 const api = axios.create({
     baseURL: API_BASE_URL,

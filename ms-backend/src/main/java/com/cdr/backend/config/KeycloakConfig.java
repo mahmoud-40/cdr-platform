@@ -17,6 +17,13 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import java.util.Arrays;
 
@@ -28,6 +35,10 @@ public class KeycloakConfig {
 
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
     private String jwkSetUri;
+
+    public KeycloakConfig() {
+        System.out.println("DEBUG: KeycloakConfig loaded!");
+    }
 
     @Bean
     public JwtDecoder jwtDecoder() {
@@ -63,8 +74,8 @@ public class KeycloakConfig {
                 logger.info("Configuring OAuth2 resource server");
                 oauth2.jwt(jwt -> {
                     logger.info("Configuring JWT authentication");
-                    jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())
-                       .decoder(jwtDecoder());
+                    jwt.jwtAuthenticationConverter(jwtAuthenticationConverter());
+                    jwt.decoder(jwtDecoder());
                 });
             });
         return http.build();
@@ -72,14 +83,28 @@ public class KeycloakConfig {
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        logger.info("Configuring JWT authentication converter");
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
-        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
-
-        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
-        return jwtAuthenticationConverter;
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            System.out.println("DEBUG: JwtGrantedAuthoritiesConverter called. Claims: " + jwt.getClaims());
+            Collection<GrantedAuthority> authorities = new ArrayList<>();
+            Object realmAccessObj = jwt.getClaims().get("realm_access");
+            if (realmAccessObj instanceof Map) {
+                Map<?, ?> realmAccess = (Map<?, ?>) realmAccessObj;
+                Object rolesObj = realmAccess.get("roles");
+                if (rolesObj instanceof Collection<?>) {
+                    Collection<?> roles = (Collection<?>) rolesObj;
+                    for (Object roleObj : roles) {
+                        if (roleObj instanceof String) {
+                            String role = (String) roleObj;
+                            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                        }
+                    }
+                }
+            }
+            System.out.println("DEBUG: Extracted authorities from JWT: " + authorities);
+            return authorities;
+        });
+        return converter;
     }
 
     @Bean

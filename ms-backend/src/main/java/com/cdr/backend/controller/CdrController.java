@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/cdrs")
+@RequestMapping("/api/v1/cdrs")
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:8083"})
 @PreAuthorize("hasRole('ADMIN')")
 public class CdrController {

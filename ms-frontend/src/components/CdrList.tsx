@@ -192,7 +192,7 @@ export const CdrList = () => {
                     Add CDR
                 </Button>
             </Box>
-            <Box sx={{ height: 'calc(100vh - 160px)', width: '100%' }}>
+            <Box sx={{ height: 600, width: '100%' }}>
                 <DataGrid
                     rows={cdrs}
                     columns={columns}

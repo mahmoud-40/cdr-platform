@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 public class CdrDto {
+    private Long id;
     private String source;
     private String destination;
     private String startTime;
