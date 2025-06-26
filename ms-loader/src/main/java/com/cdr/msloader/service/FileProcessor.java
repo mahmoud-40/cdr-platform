@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,8 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.cdr.msloader.entity.CDR;
+import com.cdr.msloader.dto.CdrDto;
+import com.cdr.msloader.mapper.CdrMapper;
 import com.cdr.msloader.parser.CDRParser;
 import com.cdr.msloader.parser.CDRParserFactory;
+import com.cdr.msloader.exception.CdrProcessingException;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -44,17 +48,19 @@ public class FileProcessor {
 
     public List<CDR> processFile(File file) throws IOException {
         validateFile(file);
-        
         try {
             CDRParser parser = parserFactory.getParser(file);
-            List<CDR> records = parser.parse(file);
+            List<CdrDto> dtos = parser.parse(file);
+            List<CDR> records = dtos.stream()
+                .map(CdrMapper::toEntity)
+                .collect(Collectors.toList());
             processedFilesCounter.increment();
             processedRecordsCounter.increment(records.size());
             return records;
-        } catch (Exception e) {
+        } catch (IOException | CdrProcessingException e) {
             failedFilesCounter.increment();
             log.error("Error processing file: {}", file.getName(), e);
-            throw new IOException("Error processing file: " + file.getName(), e);
+            throw e;
         }
     }
 

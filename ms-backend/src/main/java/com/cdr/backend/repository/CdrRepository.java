@@ -1,6 +1,6 @@
 package com.cdr.backend.repository;
 
-import com.cdr.backend.model.Cdr;
+import com.cdr.backend.entity.Cdr;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;

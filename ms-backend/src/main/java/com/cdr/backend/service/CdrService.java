@@ -1,7 +1,9 @@
 package com.cdr.backend.service;
 
-import com.cdr.backend.model.Cdr;
-import com.cdr.backend.model.CdrReport;
+import com.cdr.backend.dto.CdrDto;
+import com.cdr.backend.dto.CdrReportDto;
+import com.cdr.backend.dto.CreateCdrDto;
+import com.cdr.backend.dto.UpdateCdrDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -10,16 +12,16 @@ import java.util.List;
 import java.util.Map;
 
 public interface CdrService {
-    List<Cdr> getAllCdrs();
-    Cdr getCdrById(Long id);
-    Cdr createCdr(Cdr cdr);
-    Cdr updateCdr(Long id, Cdr cdrDetails);
+    List<CdrDto> getAllCdrs();
+    CdrDto getCdrById(Long id);
+    CdrDto createCdr(CreateCdrDto cdrDto);
+    CdrDto updateCdr(Long id, UpdateCdrDto cdrDto);
     void deleteCdr(Long id);
-    Page<Cdr> getAllCdrs(Pageable pageable);
-    Page<Cdr> searchCdrs(Map<String, String> filters, Pageable pageable);
-    List<Cdr> getCdrsBySource(String source);
-    List<Cdr> getCdrsByDestination(String destination);
-    List<Cdr> getCdrsByService(String service);
-    List<Cdr> getCdrsByDateRange(LocalDateTime start, LocalDateTime end);
-    List<CdrReport> getUsageReport();
+    Page<CdrDto> getAllCdrs(Pageable pageable);
+    Page<CdrDto> searchCdrs(Map<String, String> filters, Pageable pageable);
+    List<CdrDto> getCdrsBySource(String source);
+    List<CdrDto> getCdrsByDestination(String destination);
+    List<CdrDto> getCdrsByService(String service);
+    List<CdrDto> getCdrsByDateRange(LocalDateTime start, LocalDateTime end);
+    List<CdrReportDto> getUsageReport();
 } 

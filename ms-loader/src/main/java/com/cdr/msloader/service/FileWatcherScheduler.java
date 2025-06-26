@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cdr.msloader.entity.CDR;
+import com.cdr.msloader.dto.CdrDto;
+import com.cdr.msloader.mapper.CdrMapper;
 
 @Component
 @EnableScheduling
@@ -42,7 +44,8 @@ public class FileWatcherScheduler {
                     List<CDR> cdrs = fileProcessor.processFile(file);
                     logger.info("Parsed {} CDRs from file {}", cdrs.size(), file.getName());
                     for (CDR cdr : cdrs) {
-                        cdrService.processCdr(cdr);
+                        CdrDto dto = CdrMapper.toDto(cdr);
+                        cdrService.processCdr(dto);
                     }
                     deleteFile(file);
                 } catch (IOException e) {

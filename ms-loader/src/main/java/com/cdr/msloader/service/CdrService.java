@@ -1,13 +1,17 @@
 package com.cdr.msloader.service;
 
+import com.cdr.msloader.dto.CdrDto;
 import com.cdr.msloader.entity.CDR;
+import com.cdr.msloader.mapper.CdrMapper;
 import com.cdr.msloader.repository.CdrRepository;
+import com.cdr.msloader.exception.CdrProcessingException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,25 +37,23 @@ public class CdrService {
     }
 
     @Transactional
-    public void processCdr(CDR cdr) {
+    public void processCdr(CdrDto cdrDto) {
         try {
-            // Save to PostgreSQL
+            // Map DTO to entity and save to PostgreSQL
+            CDR cdr = CdrMapper.toEntity(cdrDto);
             cdrRepository.save(cdr);
             logger.info("Saved CDR to PostgreSQL: {}", cdr);
 
-            // Prepare JSON for Kafka (remove id, rename usage to cdr_usage)
-            ObjectNode cdrNode = objectMapper.valueToTree(cdr);
-            cdrNode.remove("id");
-            if (cdrNode.has("usage")) {
-                cdrNode.set("cdr_usage", cdrNode.get("usage"));
-                cdrNode.remove("usage");
-            }
-            String jsonMessage = objectMapper.writeValueAsString(cdrNode);
+            // Send DTO as JSON to Kafka
+            String jsonMessage = objectMapper.writeValueAsString(cdrDto);
             kafkaTemplate.send(cdrTopic, jsonMessage);
             logger.info("Sent CDR to Kafka: {}", jsonMessage);
-        } catch (Exception e) {
-            logger.error("Error processing CDR: {}", cdr, e);
-            throw new RuntimeException("Failed to process CDR: " + e.getMessage(), e);
+        } catch (JsonProcessingException e) {
+            logger.error("JSON processing error for CDR DTO: {}", cdrDto, e);
+            throw new CdrProcessingException("Failed to serialize CDR DTO: " + e.getMessage(), e);
+        } catch (DataAccessException e) {
+            logger.error("Database error for CDR DTO: {}", cdrDto, e);
+            throw new CdrProcessingException("Failed to save CDR to database: " + e.getMessage(), e);
         }
     }
 } 

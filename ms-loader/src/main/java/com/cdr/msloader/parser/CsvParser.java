@@ -3,9 +3,6 @@ package com.cdr.msloader.parser;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,18 +10,17 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cdr.msloader.entity.CDR;
+import com.cdr.msloader.dto.CdrDto;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 
 @Component
 public class CsvParser implements CDRParser {
     private static final Logger log = LoggerFactory.getLogger(CsvParser.class);
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     @Override
-    public List<CDR> parse(File file) throws Exception {
-        List<CDR> cdrs = new ArrayList<>();
+    public List<CdrDto> parse(File file) throws IOException {
+        List<CdrDto> cdrs = new ArrayList<>();
         try (CSVReader reader = new CSVReader(new FileReader(file))) {
             // Skip header row
             reader.readNext();
@@ -36,18 +32,14 @@ public class CsvParser implements CDRParser {
                     for (int i = 0; i < record.length; i++) {
                         record[i] = record[i].trim();
                     }
-                    // TODO: builders
-                    CDR cdr = new CDR();
+                    CdrDto cdr = new CdrDto();
                     cdr.setSource(record[0]);
                     cdr.setDestination(record[1]);
-                    cdr.setStartTime(LocalDateTime.parse(record[2], DATE_TIME_FORMATTER));
+                    cdr.setStartTime(record[2]);
                     cdr.setService(record[3]);
                     cdr.setUsage(Integer.parseInt(record[4]));
-                    log.info("Parsed CDR: {}", cdr);
+                    log.info("Parsed CdrDto: {}", cdr);
                     cdrs.add(cdr);
-                } catch (DateTimeParseException e) {
-                    log.error("Error parsing date in CSV file: {}", file.getName(), e);
-                    throw new IOException("Invalid date format in CSV file. Expected ISO-8601 format (yyyy-MM-ddTHH:mm:ss)", e);
                 } catch (NumberFormatException e) {
                     log.error("Error parsing usage in CSV file: {}", file.getName(), e);
                     throw new IOException("Invalid usage format in CSV file. Expected a number.", e);

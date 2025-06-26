@@ -1,7 +1,9 @@
 package com.cdr.backend.controller;
 
-import com.cdr.backend.model.Cdr;
-import com.cdr.backend.model.CdrReport;
+import com.cdr.backend.dto.CdrDto;
+import com.cdr.backend.dto.CdrReportDto;
+import com.cdr.backend.dto.CreateCdrDto;
+import com.cdr.backend.dto.UpdateCdrDto;
 import com.cdr.backend.service.CdrService;
 import com.cdr.backend.service.KafkaConsumerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,23 +28,28 @@ public class CdrController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Cdr>> getAllCdrs() {
+    public ResponseEntity<List<CdrDto>> getAllCdrs() {
         return ResponseEntity.ok(cdrService.getAllCdrs());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Cdr> getCdrById(@PathVariable Long id) {
+    public ResponseEntity<CdrDto> getCdrById(@PathVariable Long id) {
         return ResponseEntity.ok(cdrService.getCdrById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Cdr> createCdr(@RequestBody Cdr cdr) {
-        return ResponseEntity.ok(cdrService.createCdr(cdr));
+    public ResponseEntity<CdrDto> createCdr(@RequestBody CreateCdrDto cdrDto) {
+        return ResponseEntity.ok(cdrService.createCdr(cdrDto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Cdr> updateCdr(@PathVariable Long id, @RequestBody Cdr cdrDetails) {
-        return ResponseEntity.ok(cdrService.updateCdr(id, cdrDetails));
+    public ResponseEntity<CdrDto> updateCdr(@PathVariable Long id, @RequestBody UpdateCdrDto cdrDto) {
+        return ResponseEntity.ok(cdrService.updateCdr(id, cdrDto));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<CdrDto> patchCdr(@PathVariable Long id, @RequestBody UpdateCdrDto cdrDto) {
+        return ResponseEntity.ok(cdrService.updateCdr(id, cdrDto));
     }
 
     @DeleteMapping("/{id}")
@@ -52,29 +59,29 @@ public class CdrController {
     }
 
     @GetMapping("/source/{source}")
-    public ResponseEntity<List<Cdr>> getCdrsBySource(@PathVariable String source) {
+    public ResponseEntity<List<CdrDto>> getCdrsBySource(@PathVariable String source) {
         return ResponseEntity.ok(cdrService.getCdrsBySource(source));
     }
 
     @GetMapping("/destination/{destination}")
-    public ResponseEntity<List<Cdr>> getCdrsByDestination(@PathVariable String destination) {
+    public ResponseEntity<List<CdrDto>> getCdrsByDestination(@PathVariable String destination) {
         return ResponseEntity.ok(cdrService.getCdrsByDestination(destination));
     }
 
     @GetMapping("/service/{service}")
-    public ResponseEntity<List<Cdr>> getCdrsByService(@PathVariable String service) {
+    public ResponseEntity<List<CdrDto>> getCdrsByService(@PathVariable String service) {
         return ResponseEntity.ok(cdrService.getCdrsByService(service));
     }
 
     @GetMapping("/date-range")
-    public ResponseEntity<List<Cdr>> getCdrsByDateRange(
+    public ResponseEntity<List<CdrDto>> getCdrsByDateRange(
             @RequestParam LocalDateTime start,
             @RequestParam LocalDateTime end) {
         return ResponseEntity.ok(cdrService.getCdrsByDateRange(start, end));
     }
 
     @GetMapping("/report")
-    public ResponseEntity<List<CdrReport>> getUsageReport() {
+    public ResponseEntity<List<CdrReportDto>> getUsageReport() {
         return ResponseEntity.ok(cdrService.getUsageReport());
     }
 } 

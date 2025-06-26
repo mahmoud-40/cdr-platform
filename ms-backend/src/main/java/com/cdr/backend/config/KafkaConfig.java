@@ -1,6 +1,6 @@
 package com.cdr.backend.config;
 
-import com.cdr.backend.model.Cdr;
+import com.cdr.backend.entity.Cdr;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -71,9 +71,9 @@ public class KafkaConfig {
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 300000); // 5 minutes
         props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 60000); // 1 minute
         props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 20000); // 20 seconds
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "com.cdr.backend.model");
+        props.put(JsonDeserializer.TRUSTED_PACKAGES, "com.cdr.backend.entity");
         props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, true);
-        props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.cdr.backend.model.Cdr");
+        props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.cdr.backend.entity.Cdr");
         
         return new DefaultKafkaConsumerFactory<>(props, 
             new StringDeserializer(),

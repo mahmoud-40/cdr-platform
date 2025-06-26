@@ -1,6 +1,8 @@
 package com.cdr.msloader.service;
 
+import com.cdr.msloader.dto.CdrDto;
 import com.cdr.msloader.entity.CDR;
+import com.cdr.msloader.mapper.CdrMapper;
 import com.cdr.msloader.parser.CDRParser;
 import com.cdr.msloader.parser.CDRParserFactory;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -52,12 +54,12 @@ class FileProcessorTest {
         Files.write(testFile.toPath(), "test.csv content".getBytes());
 
         // Mock parser behavior
-        List<CDR> expectedRecords = Arrays.asList(
-            createCDR("123", "456", "VOICE", 60),
-            createCDR("789", "012", "SMS", 1)
+        List<CdrDto> dtos = Arrays.asList(
+            createDto("123", "456", "2024-01-01T00:00:00", "VOICE", 60),
+            createDto("789", "012", "2024-01-01T00:00:00", "SMS", 1)
         );
         when(parserFactory.getParser(any(File.class))).thenReturn(mockParser);
-        when(mockParser.parse(any(File.class))).thenReturn(expectedRecords);
+        when(mockParser.parse(any(File.class))).thenReturn(dtos);
 
         // Process the file
         List<CDR> result = fileProcessor.processFile(testFile);
@@ -65,7 +67,8 @@ class FileProcessorTest {
         // Verify results
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertEquals(expectedRecords, result);
+        assertEquals(CdrMapper.toEntity(dtos.get(0)), result.get(0));
+        assertEquals(CdrMapper.toEntity(dtos.get(1)), result.get(1));
 
         // Verify metrics
         assertEquals(1, meterRegistry.get("cdr.files.processed").counter().count());
@@ -121,12 +124,13 @@ class FileProcessorTest {
         assertEquals(1, meterRegistry.get("cdr.files.failed").counter().count());
     }
 
-    private CDR createCDR(String source, String destination, String service, int usage) {
-        CDR cdr = new CDR();
-        cdr.setSource(source);
-        cdr.setDestination(destination);
-        cdr.setService(service);
-        cdr.setUsage(usage);
-        return cdr;
+    private CdrDto createDto(String source, String destination, String startTime, String service, int usage) {
+        CdrDto dto = new CdrDto();
+        dto.setSource(source);
+        dto.setDestination(destination);
+        dto.setStartTime(startTime);
+        dto.setService(service);
+        dto.setUsage(usage);
+        return dto;
     }
 } 

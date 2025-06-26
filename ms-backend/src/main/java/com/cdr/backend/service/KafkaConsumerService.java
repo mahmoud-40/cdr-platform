@@ -1,6 +1,8 @@
 package com.cdr.backend.service;
 
-import com.cdr.backend.model.Cdr;
+import com.cdr.backend.dto.CdrDto;
+import com.cdr.backend.mapper.CdrMapper;
+import com.cdr.backend.entity.Cdr;
 import com.cdr.backend.repository.CdrRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +33,8 @@ public class KafkaConsumerService {
     public void consume(String message, Acknowledgment ack) {
         try {
             logger.info("Received message from Kafka: {}", message);
-            Cdr cdr = objectMapper.readValue(message, Cdr.class);
+            CdrDto cdrDto = objectMapper.readValue(message, CdrDto.class);
+            Cdr cdr = CdrMapper.toEntity(cdrDto);
             cdrRepository.save(cdr);
             ack.acknowledge();
             logger.info("Successfully processed and saved CDR: {}", cdr);

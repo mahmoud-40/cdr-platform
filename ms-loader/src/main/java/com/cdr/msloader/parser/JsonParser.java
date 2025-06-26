@@ -1,7 +1,6 @@
-// src/main/java/com/cdr/msloader/parser/JsonParser.java
 package com.cdr.msloader.parser;
 
-import com.cdr.msloader.entity.CDR;
+import com.cdr.msloader.dto.CdrDto;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +19,8 @@ public class JsonParser implements CDRParser {
     }
 
     @Override
-    public List<CDR> parse(File file) throws Exception {
-        return objectMapper.readValue(file, new TypeReference<List<CDR>>() {});
+    public List<CdrDto> parse(File file) throws IOException {
+        return objectMapper.readValue(file, new TypeReference<List<CdrDto>>() {});
     }
 
     @Override

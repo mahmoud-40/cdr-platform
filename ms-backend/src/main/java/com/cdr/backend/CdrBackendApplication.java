@@ -8,7 +8,7 @@ import org.springframework.kafka.annotation.EnableKafka;
 
 @SpringBootApplication
 @EnableKafka
-@EntityScan("com.cdr.backend.model")
+@EntityScan("com.cdr.backend.entity")
 @EnableJpaRepositories("com.cdr.backend.repository")
 public class CdrBackendApplication {
     public static void main(String[] args) {

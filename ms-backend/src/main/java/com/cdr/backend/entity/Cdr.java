@@ -1,4 +1,4 @@
-package com.cdr.backend.model;
+package com.cdr.backend.entity;
 
 import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
@@ -68,55 +68,6 @@ public class Cdr {
         } catch (Exception e) {
             logger.error("Error validating CDR ID {}: {}", id, e.getMessage());
         }
-    }
-
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public String getDestination() {
-        return destination;
-    }
-
-    public void setDestination(String destination) {
-        this.destination = destination;
-    }
-
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(LocalDateTime startTime) {
-        this.startTime = startTime;
-    }
-
-    public String getService() {
-        return service;
-    }
-
-    public void setService(String service) {
-        this.service = service;
-    }
-
-    public Integer getUsage() {
-        return usage;
-    }
-
-    public void setUsage(Integer usage) {
-        this.usage = usage;
     }
 
     @Override
