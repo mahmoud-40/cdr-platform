@@ -5,9 +5,9 @@ import com.cdr.backend.dto.CdrReportDto;
 import com.cdr.backend.dto.CreateCdrDto;
 import com.cdr.backend.dto.UpdateCdrDto;
 import com.cdr.backend.service.CdrService;
-import com.cdr.backend.service.KafkaConsumerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -16,15 +16,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/cdrs")
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:8083"})
+@PreAuthorize("hasRole('ADMIN')")
 public class CdrController {
 
     private final CdrService cdrService;
-    private final KafkaConsumerService kafkaConsumerService;
 
     @Autowired
-    public CdrController(CdrService cdrService, KafkaConsumerService kafkaConsumerService) {
+    public CdrController(CdrService cdrService) {
         this.cdrService = cdrService;
-        this.kafkaConsumerService = kafkaConsumerService;
     }
 
     @GetMapping
@@ -58,21 +57,25 @@ public class CdrController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping("/source/{source}")
     public ResponseEntity<List<CdrDto>> getCdrsBySource(@PathVariable String source) {
         return ResponseEntity.ok(cdrService.getCdrsBySource(source));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping("/destination/{destination}")
     public ResponseEntity<List<CdrDto>> getCdrsByDestination(@PathVariable String destination) {
         return ResponseEntity.ok(cdrService.getCdrsByDestination(destination));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping("/service/{service}")
     public ResponseEntity<List<CdrDto>> getCdrsByService(@PathVariable String service) {
         return ResponseEntity.ok(cdrService.getCdrsByService(service));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping("/date-range")
     public ResponseEntity<List<CdrDto>> getCdrsByDateRange(
             @RequestParam LocalDateTime start,
@@ -80,6 +83,7 @@ public class CdrController {
         return ResponseEntity.ok(cdrService.getCdrsByDateRange(start, end));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping("/report")
     public ResponseEntity<List<CdrReportDto>> getUsageReport() {
         return ResponseEntity.ok(cdrService.getUsageReport());
