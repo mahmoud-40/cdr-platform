@@ -45,7 +45,6 @@ spring:
         enable.idempotence: true
     topic:
       cdr: cdr-topic2
-      dead-letter: cdr-topic2.DLT
 
   security:
     oauth2:

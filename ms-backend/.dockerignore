@@ -1,23 +1,54 @@
-# Maven
+# Build artifacts
 target/
-!target/*.jar
-.mvn/
-mvnw
-mvnw.cmd
+*.jar
+*.war
+*.ear
 
 # IDE files
 .idea/
-*.iml
 .vscode/
+*.iml
+*.ipr
+*.iws
 .project
 .classpath
 .settings/
 
-# Git
+# OS files
+.DS_Store
+Thumbs.db
+
+# Version control
 .git/
 .gitignore
 
+# Documentation
+README.md
+*.md
+
+# Test files (keep for build stage, exclude in optimized builds)
+# src/test/
+
 # Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Maven wrapper (keep mvnw for builds)
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Docker
+Dockerfile*
+.dockerignore
+
+# Cache directories
+node_modules/
+.npm/
 *.log
 
 # OS specific files
