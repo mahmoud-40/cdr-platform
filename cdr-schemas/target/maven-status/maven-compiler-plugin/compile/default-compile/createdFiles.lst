@@ -1,0 +1,6 @@
+com\cdr\schemas\example\CdrAvroExample.class
+com\cdr\schemas\avro\CdrAvro$Builder.class
+com\cdr\schemas\avro\CdrAvro.class
+com\cdr\cdrschemas\CdrSchemasApplication.class
+com\cdr\schemas\util\CdrAvroConverter.class
+com\cdr\schemas\util\SchemaRegistryUtil.class

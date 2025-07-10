@@ -22,30 +22,31 @@ spring:
 
   kafka:
     bootstrap-servers: kafka:29092
+    properties:
+      schema.registry.url: http://schema-registry:8081
     consumer:
       group-id: cdr-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
       properties:
-        spring.json.trusted.packages: "com.cdr.backend.entity"
-        spring.json.use.type.headers: false
-        spring.json.value.default.type: java.util.Map
+        schema.registry.url: http://schema-registry:8081
+        specific.avro.reader: true
       max-poll-records: 500
       max-poll-interval-ms: 300000
       session-timeout-ms: 60000
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
       acks: all
       retries: 3
       retry-backoff-ms: 1000
       properties:
+        schema.registry.url: http://schema-registry:8081
         max.in.flight.requests.per.connection: 1
         enable.idempotence: true
     topic:
       cdr: cdr-topic2
-      dead-letter: cdr-topic2.DLT
 
   security:
     oauth2:

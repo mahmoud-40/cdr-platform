@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "CdrAvro",
+  "namespace": "com.cdr.avro",
+  "fields": [
+    { "name": "source", "type": "string" },
+    { "name": "destination", "type": "string" },
+    { "name": "startTime", "type": "string" },
+    { "name": "service", "type": "string" },
+    { "name": "usage", "type": "int" }
+  ]
+}
