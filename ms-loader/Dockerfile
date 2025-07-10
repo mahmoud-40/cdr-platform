@@ -10,6 +10,7 @@ WORKDIR /app
 COPY pom.xml .
 COPY --from=deps /root/.m2 /root/.m2
 COPY src ./src
+COPY schema ./schema
 RUN mvn package -DskipTests -B --no-transfer-progress
 
 # Stage 3: Runtime optimized
@@ -40,7 +41,7 @@ ENV JAVA_OPTS="-Xms256m -Xmx512m \
     -Djava.security.egd=file:/dev/./urandom \
     -Djava.awt.headless=true"
 
-EXPOSE 8081
+EXPOSE 8087
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \

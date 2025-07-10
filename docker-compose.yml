@@ -21,10 +21,10 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: '0.5'
+          cpus: "0.5"
         reservations:
           memory: 256M
-          cpus: '0.25'
+          cpus: "0.25"
     healthcheck:
       test:
         ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
@@ -89,10 +89,10 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: '1.0'
+          cpus: "1.0"
         reservations:
           memory: 512M
-          cpus: '0.5'
+          cpus: "0.5"
     healthcheck:
       test:
         [
@@ -274,7 +274,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
     ports:
-      - "8081:8081"
+      - "8087:8087"
     depends_on:
       - kafka
       - postgres
@@ -303,6 +303,21 @@ services:
       KAFKA_BROKERCONNECT: kafka:29092
     depends_on:
       - kafka
+    networks:
+      - cdr-network
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.4.4
+    container_name: cdr-schema-registry
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "PLAINTEXT://kafka:29092"
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    ports:
+      - "8081:8081"
     networks:
       - cdr-network
 

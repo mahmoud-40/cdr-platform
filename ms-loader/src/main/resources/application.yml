@@ -15,11 +15,14 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
   kafka:
+    properties:
+      schema.registry.url: http://schema-registry:8081
     producer:
       bootstrap-servers: kafka:29092
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
       properties:
+        schema.registry.url: http://schema-registry:8081
         spring.json.trusted.packages: "com.cdr.msloader.entity"
         spring.json.use.type.headers: false
         spring.json.value.default.type: java.util.Map
@@ -77,3 +80,6 @@ logging:
     org.hibernate.tool.hbm2ddl: TRACE
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+server:
+  port: 8087
